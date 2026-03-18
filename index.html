@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="La Rusia">
+<meta name="theme-color" content="#ffffff">
+<title>La Rusia — Inventario</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111;min-height:100vh;max-width:430px;margin:0 auto;}
+.app-header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#fff;border-bottom:1px solid #e0e0e0;position:sticky;top:0;z-index:20;}
+.app-logo{width:36px;height:36px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;}
+.app-title{font-size:16px;font-weight:700;}
+.app-sub{font-size:11px;color:#666;}
+.tabs{display:flex;background:#fff;border-bottom:1px solid #e0e0e0;position:sticky;top:62px;z-index:19;}
+.tab{flex:1;padding:12px 4px;font-size:13px;text-align:center;cursor:pointer;color:#888;border-bottom:3px solid transparent;font-weight:500;}
+.tab.active{color:#111;border-bottom-color:#111;}
+.view{display:none;padding:14px 14px 90px;}
+.view.active{display:block;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.stat{background:#fff;border-radius:10px;padding:10px;text-align:center;border:1px solid #e0e0e0;}
+.stat-val{font-size:22px;font-weight:700;}
+.stat-lbl{font-size:10px;color:#888;margin-top:2px;text-transform:uppercase;}
+.card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:13px;margin-bottom:8px;border-left:4px solid #ccc;}
+.card.mh{border-left-color:#c0392b;}.card.mm{border-left-color:#e67e22;}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px;}
+.card-name{font-size:14px;font-weight:700;flex:1;padding-right:6px;}
+.card-btns{display:flex;gap:6px;}
+.bsm{width:30px;height:30px;border-radius:8px;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.field{background:#f5f5f5;border-radius:8px;padding:7px 9px;}
+.fl{font-size:9px;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+.fv{font-size:13px;font-weight:700;}
+.fv.g{color:#27ae60;}.fv.r{color:#c0392b;}.fv.a{color:#e67e22;}
+.cmeta{display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid #eee;font-size:10px;color:#999;}
+.lbl{display:block;font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;font-weight:600;}
+.lbl.req::after{content:' *';color:#c0392b;}
+.fg{margin-bottom:12px;}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px;}
+input,select{width:100%;background:#fff;border:1px solid #ccc;border-radius:10px;padding:12px 13px;color:#111;font-size:15px;font-family:inherit;outline:none;-webkit-appearance:none;appearance:none;}
+input:focus,select:focus{border-color:#111;}
+.input-err{border-color:#c0392b!important;}
+.err-msg{font-size:11px;color:#c0392b;margin-top:3px;display:none;}
+.err-msg.show{display:block;}
+.bp{width:100%;padding:14px;background:#111;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;}
+.bo{width:100%;padding:12px;background:#fff;color:#111;border:1px solid #ccc;border-radius:10px;font-size:13px;cursor:pointer;margin-top:8px;font-weight:500;}
+.bpdf{width:100%;padding:12px;background:#fff;color:#c0392b;border:1px solid #c0392b;border-radius:10px;font-size:13px;cursor:pointer;margin-top:7px;font-weight:700;}
+.bxls{width:100%;padding:12px;background:#fff;color:#185fa5;border:1px solid #185fa5;border-radius:10px;font-size:13px;cursor:pointer;margin-top:7px;font-weight:700;}
+.slbl{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.empty{text-align:center;padding:40px 16px;color:#aaa;font-size:13px;line-height:1.7;}
+.hint{font-size:12px;color:#888;padding:10px 12px;background:#f5f5f5;border-radius:10px;border:1px solid #e0e0e0;}
+.abadge{display:inline-block;font-size:9px;padding:3px 8px;border-radius:10px;font-weight:700;margin-bottom:4px;}
+.bc{background:#eaf3de;color:#3b6d11;}.bs{background:#e6f1fb;color:#185fa5;}.bb{background:#faeeda;color:#854f0b;}
+.day-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;margin-bottom:10px;overflow:hidden;}
+.day-hdr{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#f5f5f5;cursor:pointer;}
+.day-date{font-size:13px;font-weight:700;}
+.day-info{font-size:11px;color:#888;}
+.day-body{padding:10px 14px;display:none;}
+.day-body.open{display:block;}
+.area-st{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#aaa;margin:8px 0 5px;padding-bottom:4px;border-bottom:1px solid #eee;}
+.hrow{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:12px;}
+.hrow:last-child{border:none;}
+.hprod{font-weight:700;flex:2;}
+.hnums{display:flex;gap:10px;font-size:11px;color:#888;}
+.day-actions{display:flex;gap:7px;margin-top:10px;padding-top:10px;border-top:1px solid #eee;}
+.day-actions button{flex:1;margin:0;}
+.filter-bar{display:flex;gap:8px;margin-bottom:12px;align-items:flex-end;}
+.filter-bar .fg{flex:1;margin:0;}
+.pnote{font-size:10px;color:#aaa;margin-top:5px;text-align:center;}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none;align-items:flex-end;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:18px 18px 0 0;padding:20px 16px 40px;width:100%;max-width:430px;}
+.mhdl{width:36px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px;}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 20px;border-radius:24px;font-size:12px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;z-index:99;}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-logo">LR</div>
+  <div>
+    <div class="app-title">La Rusia</div>
+    <div class="app-sub">Control de Inventario</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('hoy')">Hoy</div>
+  <div class="tab" onclick="showTab('agregar')">Agregar</div>
+  <div class="tab" onclick="showTab('historial')">Historial</div>
+</div>
+
+<div id="view-hoy" class="view active">
+  <div class="stats" id="stats"></div>
+  <div class="slbl">Registros de hoy</div>
+  <div id="product-list"></div>
+</div>
+
+<div id="view-agregar" class="view">
+  <div class="fg">
+    <label class="lbl">Area — elige primero</label>
+    <select id="f-area" onchange="onAreaChange()">
+      <option value="">— Seleccionar area —</option>
+      <option>Cocina</option>
+      <option>Barra de Sushi</option>
+      <option>Barra de alcoholes</option>
+    </select>
+  </div>
+  <div id="prod-section" style="display:none;">
+    <div class="fg">
+      <label class="lbl">Producto</label>
+      <select id="f-sel" onchange="onSel()"></select>
+    </div>
+    <div id="new-grp" style="display:none;" class="fg">
+      <label class="lbl">Nombre nuevo producto</label>
+      <input type="text" id="f-nuevo" placeholder="Ej: Ceviche mixto...">
+    </div>
+    <div class="fr">
+      <div class="fg" style="margin:0"><label class="lbl">Stock</label><input type="number" id="f-stock" placeholder="0" min="0" step="0.01"></div>
+      <div class="fg" style="margin:0"><label class="lbl">Unidad stock</label>
+        <select id="f-ustock"><option>kg</option><option>g</option><option>L</option><option>ml</option><option selected>unid</option><option>caja</option></select>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="fg" style="margin:0"><label class="lbl">Merma</label><input type="number" id="f-merma" placeholder="0" min="0" step="0.01"></div>
+      <div class="fg" style="margin:0"><label class="lbl">Unidad merma</label>
+        <select id="f-umerma"><option>kg</option><option>g</option><option>L</option><option>ml</option><option selected>unid</option><option>%</option></select>
+      </div>
+    </div>
+    <div class="fg">
+      <label class="lbl req">Nombre Colaborador La Rusia</label>
+      <input type="text" id="f-resp" placeholder="Nombre Colaborador La Rusia" oninput="clearRespErr()">
+      <div class="err-msg" id="resp-err">Este campo es obligatorio</div>
+    </div>
+    <button class="bp" onclick="addProduct()">Registrar producto</button>
+  </div>
+  <div id="area-hint" class="hint">Selecciona un area para ver los productos disponibles.</div>
+</div>
+
+<div id="view-historial" class="view">
+  <div class="filter-bar">
+    <div class="fg"><label class="lbl">Filtrar por fecha</label><input type="date" id="hist-filter" onchange="renderHistorial()"></div>
+    <button class="bo" style="margin:0;width:auto;padding:12px 14px;font-size:11px;" onclick="document.getElementById('hist-filter').value='';renderHistorial()">Ver todo</button>
+  </div>
+  <div id="hist-list"></div>
+  <div style="margin-top:14px;">
+    <button class="bxls" onclick="exportarExcel()">Descargar historial — Excel</button>
+    <p class="pnote">Una fila por registro, organizado por fecha y area</p>
+  </div>
+</div>
+
+<div id="edit-modal" class="modal-bg" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="mhdl"></div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:14px;">Editar registro</div>
+    <input type="hidden" id="e-id"><input type="hidden" id="e-fecha">
+    <div class="fg"><label class="lbl">Producto</label><input type="text" id="e-prod"></div>
+    <div class="fr">
+      <div class="fg" style="margin:0"><label class="lbl">Stock</label><input type="number" id="e-stock" min="0" step="0.01"></div>
+      <div class="fg" style="margin:0"><label class="lbl">Unidad</label><select id="e-ustock"><option>kg</option><option>g</option><option>L</option><option>ml</option><option>unid</option><option>caja</option></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg" style="margin:0"><label class="lbl">Merma</label><input type="number" id="e-merma" min="0" step="0.01"></div>
+      <div class="fg" style="margin:0"><label class="lbl">Unidad</label><select id="e-umerma"><option>kg</option><option>g</option><option>L</option><option>ml</option><option>unid</option><option>%</option></select></div>
+    </div>
+    <div class="fg"><label class="lbl">Area</label>
+      <select id="e-area"><option value="">— Seleccionar —</option><option>Cocina</option><option>Barra de Sushi</option><option>Barra de alcoholes</option></select>
+    </div>
+    <div class="fg">
+      <label class="lbl req">Nombre Colaborador La Rusia</label>
+      <input type="text" id="e-resp" placeholder="Nombre Colaborador La Rusia">
+    </div>
+    <button class="bp" onclick="saveEdit()">Guardar cambios</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+var CATALOG={
+  "Cocina":["Chashu","Fideos","Gyosa Cerdo","Gyosa Langostinos","Gyosa Pollo","Huevos","Wonton Camaron"],
+  "Barra de Sushi":["Arroz Sushi","Atun","Camaron Cocido","Camaron Furay","Camaron Panko","Camaron Relleno","Centolla","C. Loco","C. Salmon","Jaiva","Langostinos","Ostion","Paleo Panko","Paleo Relleno","Pescado Blanco","Pollo","Producto Palta","Pulpo","Salmon","Tartaro","T. Salmon"],
+  "Barra de alcoholes":["C. Aji Amarillo","C. Frutilla Campari","C. Kiwi","C. Naranja","C. Pina Asada","Goma","J. Frutilla","J. Mango","J. Maracuya","J. Pina","Limonada Menta","L. Tradicional","Red Rusia"]
+};
+var EXTRA={"Cocina":[],"Barra de Sushi":[],"Barra de alcoholes":[]};
+var HIST={};
+
+function saveData(){try{localStorage.setItem('lr_hist',JSON.stringify(HIST));localStorage.setItem('lr_extra',JSON.stringify(EXTRA));}catch(e){}}
+function loadData(){try{var h=localStorage.getItem('lr_hist');var e=localStorage.getItem('lr_extra');if(h)HIST=JSON.parse(h);if(e)EXTRA=JSON.parse(e);}catch(e){}}
+loadData();
+
+function today(){return new Date().toLocaleDateString('es-CL');}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).substr(2,4);}
+function clDate(iso){if(!iso)return'';var p=iso.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+
+function showTab(t){
+  document.querySelectorAll('.tab').forEach(function(el,i){el.classList.toggle('active',['hoy','agregar','historial'][i]===t);});
+  document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+t);});
+  if(t==='historial')renderHistorial();
+  if(t==='hoy')renderStock();
+}
+
+function onAreaChange(){
+  var area=document.getElementById('f-area').value;
+  if(!area){document.getElementById('prod-section').style.display='none';document.getElementById('area-hint').style.display='block';return;}
+  document.getElementById('area-hint').style.display='none';
+  document.getElementById('prod-section').style.display='block';
+  renderPS(area);
+  document.getElementById('f-sel').value='';
+  document.getElementById('new-grp').style.display='none';
+}
+
+function renderPS(area){
+  var base=CATALOG[area]||[];
+  var extra=EXTRA[area]||[];
+  var all=base.concat(extra).filter(function(v,i,a){return a.indexOf(v)===i;}).sort(function(a,b){return a.localeCompare(b,'es');});
+  var html='<option value="">— Seleccionar producto —</option>';
+  all.forEach(function(p){html+='<option value="'+p+'">'+p+'</option>';});
+  html+='<option value="__nuevo__">+ Crear nuevo producto...</option>';
+  document.getElementById('f-sel').innerHTML=html;
+}
+
+function onSel(){
+  var v=document.getElementById('f-sel').value;
+  document.getElementById('new-grp').style.display=v==='__nuevo__'?'block':'none';
+  if(v==='__nuevo__')document.getElementById('f-nuevo').focus();
+}
+
+function clearRespErr(){
+  document.getElementById('f-resp').classList.remove('input-err');
+  document.getElementById('resp-err').classList.remove('show');
+}
+
+function addProduct(){
+  var area=document.getElementById('f-area').value;
+  var sel=document.getElementById('f-sel').value;
+  var prod=sel==='__nuevo__'?document.getElementById('f-nuevo').value.trim():sel;
+  var stock=parseFloat(document.getElementById('f-stock').value)||0;
+  var ustock=document.getElementById('f-ustock').value;
+  var merma=parseFloat(document.getElementById('f-merma').value)||0;
+  var umerma=document.getElementById('f-umerma').value;
+  var resp=document.getElementById('f-resp').value.trim();
+  if(!area)return toast('Selecciona un area');
+  if(!prod)return toast('Selecciona o ingresa un producto');
+  if(!resp){document.getElementById('f-resp').classList.add('input-err');document.getElementById('resp-err').classList.add('show');document.getElementById('f-resp').focus();return;}
+  if(sel==='__nuevo__'&&prod){
+    if(!EXTRA[area])EXTRA[area]=[];
+    var allp=(CATALOG[area]||[]).concat(EXTRA[area]);
+    if(!allp.some(function(p){return p.toLowerCase()===prod.toLowerCase();}))EXTRA[area].push(prod);
+    renderPS(area);
+  }
+  var fecha=today();
+  if(!HIST[fecha])HIST[fecha]=[];
+  HIST[fecha].push({id:genId(),producto:prod,stock:stock,ustock:ustock,merma:merma,umerma:umerma,area:area,responsable:resp,fecha:fecha,hora:new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})});
+  saveData();clearForm();renderStock();toast('Producto registrado');showTab('hoy');
+}
+
+function clearForm(){
+  document.getElementById('f-area').value='';
+  document.getElementById('f-sel').value='';
+  document.getElementById('f-nuevo').value='';
+  document.getElementById('new-grp').style.display='none';
+  document.getElementById('prod-section').style.display='none';
+  document.getElementById('area-hint').style.display='block';
+  ['f-stock','f-merma','f-resp'].forEach(function(id){document.getElementById(id).value='';});
+  clearRespErr();
+}
+
+function renderStock(){
+  var recs=HIST[today()]||[];
+  var ts=recs.reduce(function(a,p){return a+(p.stock||0);},0).toFixed(1);
+  var tm=recs.reduce(function(a,p){return a+(p.merma||0);},0).toFixed(1);
+  document.getElementById('stats').innerHTML='<div class="stat"><div class="stat-val">'+recs.length+'</div><div class="stat-lbl">Hoy</div></div><div class="stat"><div class="stat-val">'+ts+'</div><div class="stat-lbl">Stock</div></div><div class="stat"><div class="stat-val">'+tm+'</div><div class="stat-lbl">Merma</div></div>';
+  var list=document.getElementById('product-list');
+  if(!recs.length){list.innerHTML='<div class="empty">Sin registros hoy.<br>Toca Agregar para comenzar.</div>';return;}
+  var html='';
+  var rev=[].concat(recs).reverse();
+  rev.forEach(function(p){
+    var pct=p.stock>0?(p.merma/p.stock*100).toFixed(1):0;
+    var cls=pct>20?'mh':pct>10?'mm':'';
+    var vc=pct>20?'r':pct>10?'a':'g';
+    var bc=p.area==='Cocina'?'bc':p.area==='Barra de Sushi'?'bs':'bb';
+    html+='<div class="card '+cls+'"><div class="card-top"><div><span class="abadge '+bc+'">'+p.area+'</span><div class="card-name">'+p.producto+'</div></div><div class="card-btns"><button class="bsm" onclick="openEdit(''+p.id+'',''+p.fecha+'')">&#9999;</button><button class="bsm" onclick="delReg(''+p.id+'',''+p.fecha+'')">&#x2715;</button></div></div><div class="cgrid"><div class="field"><div class="fl">Stock</div><div class="fv g">'+p.stock+' '+p.ustock+'</div></div><div class="field"><div class="fl">Merma</div><div class="fv '+vc+'">'+p.merma+' '+p.umerma+'</div></div><div class="field"><div class="fl">% merma</div><div class="fv '+vc+'">'+pct+'%</div></div><div class="field"><div class="fl">Area</div><div class="fv" style="font-size:11px;color:#333">'+p.area+'</div></div></div><div class="cmeta"><span>&#128100; '+p.responsable+'</span><span>'+p.hora+'</span></div></div>';
+  });
+  list.innerHTML=html;
+}
+
+function delReg(id,fecha){
+  if(!confirm('Eliminar este registro?'))return;
+  if(HIST[fecha])HIST[fecha]=HIST[fecha].filter(function(p){return p.id!==id;});
+  saveData();renderStock();toast('Registro eliminado');
+}
+
+function openEdit(id,fecha){
+  var p=(HIST[fecha]||[]).find(function(x){return x.id===id;});
+  if(!p)return;
+  document.getElementById('e-id').value=id;
+  document.getElementById('e-fecha').value=fecha;
+  document.getElementById('e-prod').value=p.producto;
+  document.getElementById('e-stock').value=p.stock;
+  document.getElementById('e-ustock').value=p.ustock;
+  document.getElementById('e-merma').value=p.merma;
+  document.getElementById('e-umerma').value=p.umerma;
+  document.getElementById('e-area').value=p.area;
+  document.getElementById('e-resp').value=p.responsable;
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeModal(e){if(e.target.id==='edit-modal')document.getElementById('edit-modal').classList.remove('open');}
+function saveEdit(){
+  var id=document.getElementById('e-id').value;
+  var fecha=document.getElementById('e-fecha').value;
+  var resp=document.getElementById('e-resp').value.trim();
+  if(!resp){document.getElementById('e-resp').classList.add('input-err');document.getElementById('e-resp').focus();return;}
+  var arr=HIST[fecha]||[];
+  var idx=arr.findIndex(function(p){return p.id===id;});
+  if(idx===-1)return;
+  arr[idx].producto=document.getElementById('e-prod').value.trim()||arr[idx].producto;
+  arr[idx].stock=parseFloat(document.getElementById('e-stock').value)||0;
+  arr[idx].ustock=document.getElementById('e-ustock').value;
+  arr[idx].merma=parseFloat(document.getElementById('e-merma').value)||0;
+  arr[idx].umerma=document.getElementById('e-umerma').value;
+  arr[idx].area=document.getElementById('e-area').value||arr[idx].area;
+  arr[idx].responsable=resp;
+  document.getElementById('e-resp').classList.remove('input-err');
+  document.getElementById('edit-modal').classList.remove('open');
+  saveData();renderStock();renderHistorial();toast('Cambios guardados');
+}
+
+function renderHistorial(){
+  var filterISO=document.getElementById('hist-filter').value;
+  var filterCL=filterISO?clDate(filterISO):'';
+  var list=document.getElementById('hist-list');
+  var fechas=Object.keys(HIST).sort(function(a,b){var pa=a.split('/').reverse().join(''),pb=b.split('/').reverse().join('');return pb.localeCompare(pa);});
+  var filtered=filterCL?fechas.filter(function(f){return f===filterCL;}):fechas;
+  if(!filtered.length){list.innerHTML='<div class="empty">Sin registros'+(filterCL?' para '+filterCL:'')+'.</div>';return;}
+  var html='';
+  filtered.forEach(function(fecha){
+    var recs=HIST[fecha]||[];
+    var areas=recs.map(function(r){return r.area;}).filter(function(v,i,a){return a.indexOf(v)===i;});
+    var bid='body-'+fecha.replace(/\//g,'-');
+    var secs='';
+    areas.forEach(function(area){
+      var items=recs.filter(function(r){return r.area===area;});
+      var bc=area==='Cocina'?'bc':area==='Barra de Sushi'?'bs':'bb';
+      secs+='<div class="area-st"><span class="abadge '+bc+'">'+area+'</span></div>';
+      items.forEach(function(p){secs+='<div class="hrow"><span class="hprod">'+p.producto+'</span><span class="hnums"><span>'+p.stock+' '+p.ustock+'</span><span>Merma: '+p.merma+' '+p.umerma+'</span></span></div>';});
+    });
+    var resps=recs.map(function(r){return r.responsable;}).filter(function(v,i,a){return a.indexOf(v)===i;}).join(', ');
+    html+='<div class="day-card"><div class="day-hdr" onclick="toggleDay(''+bid+'')"><span class="day-date">'+fecha+'</span><span class="day-info">'+recs.length+' productos &middot; '+areas.length+' areas</span></div><div class="day-body" id="'+bid+'">'+secs+'<div class="day-actions"><button class="bpdf" onclick="generarPDF(''+fecha+'')">PDF</button><button class="bxls" onclick="exportarExcelFecha(''+fecha+'')">Excel</button></div><div style="font-size:10px;color:#aaa;margin-top:6px;">Colaboradores: '+resps+'</div></div></div>';
+  });
+  list.innerHTML=html;
+}
+function toggleDay(id){document.getElementById(id).classList.toggle('open');}
+
+function generarPDF(fecha){
+  var recs=HIST[fecha]||[];
+  if(!recs.length)return toast('Sin datos');
+  if(typeof window.jspdf==='undefined')return toast('Cargando...');
+  var doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'pt',format:'letter'});
+  var W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();
+  var ml=36,mr=36,cw=W-ml-mr;
+  var first=true;
+  ['Cocina','Barra de Sushi','Barra de alcoholes'].forEach(function(area){
+    var items=recs.filter(function(p){return p.area===area;});
+    if(!items.length)return;
+    if(!first)doc.addPage();
+    first=false;
+    doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(0,0,0);
+    doc.text('REPORTE DE PRODUCTOS EN PROCESO',W/2,30,{align:'center'});
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(60,60,60);
+    doc.text('La Rusia — Barra Nikkei',W/2,44,{align:'center'});
+    doc.setFontSize(8);doc.setTextColor(100,100,100);doc.text('Fecha: '+fecha,W/2,56,{align:'center'});
+    doc.setDrawColor(0,0,0);doc.setLineWidth(0.8);doc.line(ml,66,W-mr,66);
+    var rowH=22,hY=76;
+    var cols=[200,70,70,110,90];
+    var colX=[ml];
+    for(var i=1;i<cols.length;i++)colX.push(colX[i-1]+cols[i-1]);
+    doc.setFillColor(210,210,210);doc.rect(ml,hY,cw,rowH,'F');
+    doc.setDrawColor(0,0,0);doc.setLineWidth(0.5);doc.rect(ml,hY,cw,rowH,'S');
+    colX.forEach(function(x,i){if(i>0)doc.line(x,hY,x,hY+rowH);});
+    doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(0,0,0);
+    ['PRODUCTO','STOCK','UNIDAD','MERMA','UNIDAD'].forEach(function(h,i){doc.text(h,colX[i]+cols[i]/2,hY+rowH/2+3,{align:'center'});});
+    doc.setFont('helvetica','normal');doc.setFontSize(9);
+    for(var r=0;r<20;r++){
+      var y=hY+(r+1)*rowH;var p=items[r]||null;
+      if(r%2===1){doc.setFillColor(248,248,248);doc.rect(ml,y,cw,rowH,'F');}
+      doc.setDrawColor(170,170,170);doc.setLineWidth(0.3);doc.rect(ml,y,cw,rowH,'S');
+      colX.forEach(function(x,i){if(i>0)doc.line(x,y,x,y+rowH);});
+      if(p){doc.setTextColor(0,0,0);doc.text(String(p.producto),colX[0]+6,y+rowH/2+3);doc.text(String(p.stock),colX[1]+cols[1]/2,y+rowH/2+3,{align:'center'});doc.text(String(p.ustock),colX[2]+cols[2]/2,y+rowH/2+3,{align:'center'});doc.text(String(p.merma),colX[3]+cols[3]/2,y+rowH/2+3,{align:'center'});doc.text(String(p.umerma),colX[4]+cols[4]/2,y+rowH/2+3,{align:'center'});}
+    }
+    var fy=hY+21*rowH+8,fh=24,fc=[120,cw-120];
+    var resps=items.map(function(p){return p.responsable;}).filter(function(v,i,a){return a.indexOf(v)===i;}).join(', ');
+    [['FECHA',fecha],['NOMBRE COLABORADOR',resps],['AREA:',area]].forEach(function(pair,i){
+      var y2=fy+i*fh;
+      doc.setDrawColor(0,0,0);doc.setLineWidth(0.5);doc.rect(ml,y2,cw,fh,'S');doc.line(ml+fc[0],y2,ml+fc[0],y2+fh);
+      doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(0,0,0);doc.text(pair[0],ml+6,y2+fh/2+3);
+      doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text(pair[1],ml+fc[0]+8,y2+fh/2+3);
+    });
+    doc.setDrawColor(180,180,180);doc.setLineWidth(0.4);doc.line(ml,H-26,W-mr,H-26);
+    doc.setFont('helvetica','italic');doc.setFontSize(7);doc.setTextColor(120,120,120);
+    doc.text('Optimizacion de procesos y control de gestion — Oscar M',W/2,H-14,{align:'center'});
+    doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(150,150,150);
+    doc.text('La Rusia Barra Nikkei | '+fecha,W/2,H-5,{align:'center'});
+  });
+  doc.save('reporte_'+fecha.replace(/\//g,'-')+'.pdf');
+  toast('PDF generado');
+}
+
+function exportarExcel(){
+  if(typeof XLSX==='undefined')return toast('Cargando...');
+  var allRecs=[];
+  Object.keys(HIST).sort(function(a,b){return a.split('/').reverse().join('').localeCompare(b.split('/').reverse().join(''));}).forEach(function(fecha){
+    (HIST[fecha]||[]).forEach(function(p){allRecs.push({'Fecha':p.fecha,'Hora':p.hora||'','Area':p.area,'Producto':p.producto,'Stock':p.stock,'Unidad Stock':p.ustock,'Merma':p.merma,'Unidad Merma':p.umerma,'% Merma':p.stock>0?parseFloat((p.merma/p.stock*100).toFixed(1)):0,'Colaborador':p.responsable});});
+  });
+  if(!allRecs.length)return toast('Sin datos');
+  var wb=XLSX.utils.book_new();
+  var ws1=XLSX.utils.json_to_sheet(allRecs);
+  ws1['!cols']=[{wch:12},{wch:8},{wch:20},{wch:24},{wch:8},{wch:12},{wch:8},{wch:12},{wch:9},{wch:24}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Historial');
+  var res=[];
+  Object.keys(HIST).sort(function(a,b){return a.split('/').reverse().join('').localeCompare(b.split('/').reverse().join(''));}).forEach(function(fecha){
+    var recs=HIST[fecha]||[];
+    recs.map(function(r){return r.area;}).filter(function(v,i,a){return a.indexOf(v)===i;}).forEach(function(area){
+      var it=recs.filter(function(r){return r.area===area;});
+      res.push({'Fecha':fecha,'Area':area,'N Productos':it.length,'Stock Total':parseFloat(it.reduce(function(a,p){return a+(p.stock||0);},0).toFixed(2)),'Merma Total':parseFloat(it.reduce(function(a,p){return a+(p.merma||0);},0).toFixed(2)),'Colaboradores':it.map(function(p){return p.responsable;}).filter(function(v,i,a){return a.indexOf(v)===i;}).join(', ')});
+    });
+  });
+  var ws2=XLSX.utils.json_to_sheet(res);
+  ws2['!cols']=[{wch:12},{wch:20},{wch:12},{wch:12},{wch:12},{wch:32}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Resumen');
+  XLSX.writeFile(wb,'inventario_larusia_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  toast('Excel descargado');
+}
+
+function exportarExcelFecha(fecha){
+  if(typeof XLSX==='undefined')return toast('Cargando...');
+  var recs=HIST[fecha]||[];
+  if(!recs.length)return toast('Sin datos para '+fecha);
+  var wb=XLSX.utils.book_new();
+  var ws=XLSX.utils.json_to_sheet(recs.map(function(p){return{'Fecha':p.fecha,'Hora':p.hora||'','Area':p.area,'Producto':p.producto,'Stock':p.stock,'Unidad Stock':p.ustock,'Merma':p.merma,'Unidad Merma':p.umerma,'% Merma':p.stock>0?parseFloat((p.merma/p.stock*100).toFixed(1)):0,'Colaborador':p.responsable};}));
+  ws['!cols']=[{wch:12},{wch:8},{wch:20},{wch:24},{wch:8},{wch:12},{wch:8},{wch:12},{wch:9},{wch:24}];
+  XLSX.utils.book_append_sheet(wb,ws,'Registro');
+  XLSX.writeFile(wb,'registro_'+fecha.replace(/\//g,'-')+'.xlsx');
+  toast('Excel descargado');
+}
+
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.opacity=1;setTimeout(function(){t.style.opacity=0;},2400);}
+renderStock();
+</script>
+</body>
+</html>
