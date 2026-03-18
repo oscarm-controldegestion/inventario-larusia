@@ -433,14 +433,14 @@ function verHistorial() {
     var colabs = [];
     recs.forEach(function(r){ if(colabs.indexOf(r.responsable)===-1) colabs.push(r.responsable); });
     html += '<div class="day">'+
-      '<div class="day-h" onclick="document.getElementById(''+bid+'').classList.toggle('open')">'+
+      '<div class="day-h" onclick="document.getElementById(\''+bid+'\').classList.toggle(\'open\')">'+
         '<b>'+fecha+'</b><span>'+recs.length+' productos</span>'+
       '</div>'+
       '<div class="day-b" id="'+bid+'">'+
         secs+
         '<div class="day-acts">'+
-          '<button class="btn btn-red" onclick="hacerPDF(''+fecha+'')">PDF</button>'+
-          '<button class="btn btn-blue" onclick="excelFecha(''+fecha+'')">Excel</button>'+
+          '<button class="btn btn-red" onclick="hacerPDF(\''+fecha+'\')">PDF</button>'+
+          '<button class="btn btn-blue" onclick="excelFecha(\''+fecha+'\')">Excel</button>'+
         '</div>'+
         '<div style="font-size:10px;color:#aaa;margin-top:6px">Colaboradores: '+colabs.join(", ")+'</div>'+
       '</div>'+
