@@ -257,6 +257,10 @@ function borrar(id,fecha){if(!confirm("Eliminar este registro?"))return;if(HIST[
 function abrirEdit(id,fecha){var recs=HIST[fecha]||[];var p=null;recs.forEach(function(r){if(r.id===id)p=r;});if(!p)return;document.getElementById("eid").value=id;document.getElementById("efecha").value=fecha;document.getElementById("eprod").value=p.producto;document.getElementById("estock").value=p.stock;document.getElementById("eustock").value=p.ustock;document.getElementById("emerma").value=p.merma;document.getElementById("eumerma").value=p.umerma;document.getElementById("earea").value=p.area;document.getElementById("eresp").value=p.responsable;document.getElementById("modal-edit").classList.add("open");}
 function cerrarModal(e){if(e.target.id==="modal-edit")document.getElementById("modal-edit").classList.remove("open");}
 function guardarEdit(){var id=document.getElementById("eid").value;var fecha=document.getElementById("efecha").value;var resp=document.getElementById("eresp").value.trim();if(!resp){document.getElementById("eresp").classList.add("err-border");document.getElementById("eresp").focus();return;}var recs=HIST[fecha]||[];recs.forEach(function(p){if(p.id===id){p.producto=document.getElementById("eprod").value.trim()||p.producto;p.stock=parseFloat(document.getElementById("estock").value)||0;p.ustock=document.getElementById("eustock").value;p.merma=parseFloat(document.getElementById("emerma").value)||0;p.umerma=document.getElementById("eumerma").value;p.area=document.getElementById("earea").value||p.area;p.responsable=resp;}});document.getElementById("eresp").classList.remove("err-border");document.getElementById("modal-edit").classList.remove("open");guardarLS();renderHoy();verHistorial();toast("Cambios guardados");}
+function toggleDay(bid){
+  var el=document.getElementById(bid);
+  if(el)el.classList.toggle("open");
+}
 function verHistorial(){
   var sesion=getSesion();
   var filtro=document.getElementById("ffecha").value;
@@ -267,7 +271,7 @@ function verHistorial(){
   });
   var lista=filtroCL?fechas.filter(function(f){return f===filtroCL;}):fechas;
   if(!lista.length){
-    document.getElementById("hlista").innerHTML='<div class="empty">Sin registros'+(filtroCL?" para "+filtroCL:"")+".</div>";
+    document.getElementById("hlista").innerHTML='<div class="empty">Sin registros'+(filtroCL?" para "+filtroCL:"")+'.</div>';
     return;
   }
   var html="";
@@ -282,19 +286,22 @@ function verHistorial(){
     areas.forEach(function(area){
       var items=recs.filter(function(r){return r.area===area;});
       var bc=area==="Cocina"?"bg-c":area==="Barra de Sushi"?"bg-s":"bg-b";
-      secs+='<div class="area-t"><span class="badge '+bc+'">'+area+'</span></div>';
+      secs+='<div class="area-t"><span class="badge '+bc+'">'+ area +'</span></div>';
       items.forEach(function(p){
-        secs+='<div class="hr"><span class="hr-p">'+p.producto+'</span><span class="hr-n"><span>'+p.stock+" "+p.ustock+"</span><span>Merma:"+p.merma+" "+p.umerma+"</span></span></div>";
+        secs+='<div class="hr"><span class="hr-p">'+p.producto+'</span><span class="hr-n"><span>'+p.stock+" "+p.ustock+'</span><span>Merma: '+p.merma+" "+p.umerma+'</span></span></div>';
       });
     });
     var colabs=[];
     recs.forEach(function(r){if(colabs.indexOf(r.responsable)===-1)colabs.push(r.responsable);});
-    var btnsPDF='<button class="btn btn-red" onclick="hacerPDF(\"'+fecha+'\")">PDF</button>';
-    var btnsXLS='<button class="btn btn-blue" onclick="excelFecha(\"'+fecha+'\")">Excel</button>';
-    var toggleFn='document.getElementById("'+bid+'").classList.toggle("open")';
     html+='<div class="day">';
-    html+='<div class="day-h" onclick="'+toggleFn+'">'+'<b>'+fecha+'</b><span>'+recs.length+' productos</span></div>';
-    html+='<div class="day-b" id="'+bid+'">'+secs+'<div class="day-acts">'+btnsPDF+btnsXLS+'</div><div style="font-size:10px;color:#aaa;margin-top:6px">Colaboradores: '+colabs.join(", ")+'</div></div></div>';
+    html+='<div class="day-h" onclick="toggleDay(&quot;'+bid+'&quot;)"><b>'+fecha+'</b><span>'+recs.length+' productos</span></div>';
+    html+='<div class="day-b" id="'+bid+'">'+secs;
+    html+='<div class="day-acts">';
+    html+='<button class="btn btn-red" data-f="'+fecha+'" onclick="hacerPDF(this.dataset.f)">PDF</button>';
+    html+='<button class="btn btn-blue" data-f="'+fecha+'" onclick="excelFecha(this.dataset.f)">Excel</button>';
+    html+='</div>';
+    html+='<div style="font-size:10px;color:#aaa;margin-top:6px">Colaboradores: '+colabs.join(", ")+'</div>';
+    html+='</div></div>';
   });
   document.getElementById("hlista").innerHTML=html;
 }
