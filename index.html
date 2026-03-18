@@ -257,10 +257,139 @@ function borrar(id,fecha){if(!confirm("Eliminar este registro?"))return;if(HIST[
 function abrirEdit(id,fecha){var recs=HIST[fecha]||[];var p=null;recs.forEach(function(r){if(r.id===id)p=r;});if(!p)return;document.getElementById("eid").value=id;document.getElementById("efecha").value=fecha;document.getElementById("eprod").value=p.producto;document.getElementById("estock").value=p.stock;document.getElementById("eustock").value=p.ustock;document.getElementById("emerma").value=p.merma;document.getElementById("eumerma").value=p.umerma;document.getElementById("earea").value=p.area;document.getElementById("eresp").value=p.responsable;document.getElementById("modal-edit").classList.add("open");}
 function cerrarModal(e){if(e.target.id==="modal-edit")document.getElementById("modal-edit").classList.remove("open");}
 function guardarEdit(){var id=document.getElementById("eid").value;var fecha=document.getElementById("efecha").value;var resp=document.getElementById("eresp").value.trim();if(!resp){document.getElementById("eresp").classList.add("err-border");document.getElementById("eresp").focus();return;}var recs=HIST[fecha]||[];recs.forEach(function(p){if(p.id===id){p.producto=document.getElementById("eprod").value.trim()||p.producto;p.stock=parseFloat(document.getElementById("estock").value)||0;p.ustock=document.getElementById("eustock").value;p.merma=parseFloat(document.getElementById("emerma").value)||0;p.umerma=document.getElementById("eumerma").value;p.area=document.getElementById("earea").value||p.area;p.responsable=resp;}});document.getElementById("eresp").classList.remove("err-border");document.getElementById("modal-edit").classList.remove("open");guardarLS();renderHoy();verHistorial();toast("Cambios guardados");}
-function verHistorial(){var sesion=getSesion();var filtro=document.getElementById("ffecha").value;var filtroCL=filtro?isoACL(filtro):"";var fechas=Object.keys(HIST).sort(function(a,b){var pa=a.split("/").reverse().join(""),pb=b.split("/").reverse().join("");return pb.localeCompare(pa);});var lista=filtroCL?fechas.filter(function(f){return f===filtroCL;}):fechas;if(!lista.length){document.getElementById("hlista").innerHTML='<div class="empty">Sin registros'+(filtroCL?" para "+filtroCL:"")+'.</div>';return;}var html="";lista.forEach(function(fecha){var allRecs=HIST[fecha]||[];var recs=sesion&&sesion.rol!=="admin"?allRecs.filter(function(r){return r.area===sesion.area;}):allRecs;if(!recs.length)return;var areas=[];recs.forEach(function(r){if(areas.indexOf(r.area)===-1)areas.push(r.area);});var bid="b"+fecha.replace(///g,"-");var secs="";areas.forEach(function(area){var items=recs.filter(function(r){return r.area===area;});var bc=area==="Cocina"?"bg-c":area==="Barra de Sushi"?"bg-s":"bg-b";secs+='<div class="area-t"><span class="badge '+bc+'">'+area+'</span></div>';items.forEach(function(p){secs+='<div class="hr"><span class="hr-p">'+p.producto+'</span><span class="hr-n"><span>'+p.stock+' '+p.ustock+'</span><span>Merma:'+p.merma+' '+p.umerma+'</span></span></div>';});});var colabs=[];recs.forEach(function(r){if(colabs.indexOf(r.responsable)===-1)colabs.push(r.responsable);});html+='<div class="day">'+'<div class="day-h" onclick="document.getElementById(\''+bid+'\').classList.toggle(\'open\')">'+'<b>'+fecha+'</b><span>'+recs.length+' productos</span>'+'</div>'+'<div class="day-b" id="'+bid+'">'+secs+'<div class="day-acts">'+'<button class="btn btn-red" onclick="hacerPDF(\''+fecha+'\')">PDF</button>'+'<button class="btn btn-blue" onclick="excelFecha(\''+fecha+'\')">Excel</button>'+'</div>'+'<div style="font-size:10px;color:#aaa;margin-top:6px">Colaboradores: '+colabs.join(", ")+'</div>'+'</div></div>';});document.getElementById("hlista").innerHTML=html;}
-function hacerPDF(fecha){var sesion=getSesion();var allRecs=HIST[fecha]||[];var recs=sesion&&sesion.rol!=="admin"?allRecs.filter(function(r){return r.area===sesion.area;}):allRecs;if(!recs.length){toast("Sin datos");return;}if(typeof window.jspdf==="undefined"){toast("Cargando PDF...");return;}var doc=new window.jspdf.jsPDF({orientation:"portrait",unit:"pt",format:"letter"});var W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();var ml=36,mr=36,cw=W-ml-mr;var areas=sesion&&sesion.rol!=="admin"?[sesion.area]:["Cocina","Barra de Sushi","Barra de alcoholes"];var first=true;areas.forEach(function(area){var items=recs.filter(function(p){return p.area===area;});if(!items.length)return;if(!first)doc.addPage();first=false;doc.setFont("helvetica","bold");doc.setFontSize(13);doc.setTextColor(0,0,0);doc.text("REPORTE DE PRODUCTOS EN PROCESO",W/2,30,{align:"center"});doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(60,60,60);doc.text("La Rusia - Barra Nikkei",W/2,44,{align:"center"});doc.setFontSize(8);doc.setTextColor(100,100,100);doc.text("Fecha: "+fecha,W/2,56,{align:"center"});doc.setDrawColor(0,0,0);doc.setLineWidth(0.8);doc.line(ml,66,W-mr,66);var rh=22,hy=76;var cols=[200,70,70,110,90];var cx=[ml];for(var i=1;i<cols.length;i++)cx.push(cx[i-1]+cols[i-1]);doc.setFillColor(210,210,210);doc.rect(ml,hy,cw,rh,"F");doc.setDrawColor(0,0,0);doc.setLineWidth(0.5);doc.rect(ml,hy,cw,rh,"S");cx.forEach(function(x,i){if(i>0)doc.line(x,hy,x,hy+rh);});doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(0,0,0);["PRODUCTO","STOCK","UNIDAD","MERMA","UNIDAD"].forEach(function(h,i){doc.text(h,cx[i]+cols[i]/2,hy+rh/2+3,{align:"center"});});doc.setFont("helvetica","normal");doc.setFontSize(9);for(var r=0;r<20;r++){var y=hy+(r+1)*rh;var p=items[r]||null;if(r%2===1){doc.setFillColor(248,248,248);doc.rect(ml,y,cw,rh,"F");}doc.setDrawColor(170,170,170);doc.setLineWidth(0.3);doc.rect(ml,y,cw,rh,"S");cx.forEach(function(x,i){if(i>0)doc.line(x,y,x,y+rh);});if(p){doc.setTextColor(0,0,0);doc.text(""+p.producto,cx[0]+6,y+rh/2+3);doc.text(""+p.stock,cx[1]+cols[1]/2,y+rh/2+3,{align:"center"});doc.text(""+p.ustock,cx[2]+cols[2]/2,y+rh/2+3,{align:"center"});doc.text(""+p.merma,cx[3]+cols[3]/2,y+rh/2+3,{align:"center"});doc.text(""+p.umerma,cx[4]+cols[4]/2,y+rh/2+3,{align:"center"});}}var fy=hy+21*rh+8,fh=24,fc=[120,cw-120];var colabs=[];items.forEach(function(p){if(colabs.indexOf(p.responsable)===-1)colabs.push(p.responsable);});[["FECHA",fecha],["NOMBRE COLABORADOR",colabs.join(", ")],["AREA:",area]].forEach(function(pair,i){var y2=fy+i*fh;doc.setDrawColor(0,0,0);doc.setLineWidth(0.5);doc.rect(ml,y2,cw,fh,"S");doc.line(ml+fc[0],y2,ml+fc[0],y2+fh);doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(0,0,0);doc.text(pair[0],ml+6,y2+fh/2+3);doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text(pair[1],ml+fc[0]+8,y2+fh/2+3);});doc.setDrawColor(180,180,180);doc.setLineWidth(0.4);doc.line(ml,H-26,W-mr,H-26);doc.setFont("helvetica","italic");doc.setFontSize(7);doc.setTextColor(120,120,120);doc.text("Optimizacion de procesos y control de gestion - Oscar M",W/2,H-14,{align:"center"});doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(150,150,150);doc.text("La Rusia Barra Nikkei | "+fecha,W/2,H-5,{align:"center"});});doc.save("reporte_"+fecha.replace(///g,"-")+".pdf");toast("PDF generado");}
+function verHistorial(){
+  var sesion=getSesion();
+  var filtro=document.getElementById("ffecha").value;
+  var filtroCL=filtro?isoACL(filtro):"";
+  var fechas=Object.keys(HIST).sort(function(a,b){
+    var pa=a.split("/").reverse().join(""),pb=b.split("/").reverse().join("");
+    return pb.localeCompare(pa);
+  });
+  var lista=filtroCL?fechas.filter(function(f){return f===filtroCL;}):fechas;
+  if(!lista.length){
+    document.getElementById("hlista").innerHTML='<div class="empty">Sin registros'+(filtroCL?" para "+filtroCL:"")+".</div>";
+    return;
+  }
+  var html="";
+  lista.forEach(function(fecha){
+    var allRecs=HIST[fecha]||[];
+    var recs=sesion&&sesion.rol!=="admin"?allRecs.filter(function(r){return r.area===sesion.area;}):allRecs;
+    if(!recs.length)return;
+    var areas=[];
+    recs.forEach(function(r){if(areas.indexOf(r.area)===-1)areas.push(r.area);});
+    var bid="b"+fecha.replace(/\//g,"-");
+    var secs="";
+    areas.forEach(function(area){
+      var items=recs.filter(function(r){return r.area===area;});
+      var bc=area==="Cocina"?"bg-c":area==="Barra de Sushi"?"bg-s":"bg-b";
+      secs+='<div class="area-t"><span class="badge '+bc+'">'+area+'</span></div>';
+      items.forEach(function(p){
+        secs+='<div class="hr"><span class="hr-p">'+p.producto+'</span><span class="hr-n"><span>'+p.stock+" "+p.ustock+"</span><span>Merma:"+p.merma+" "+p.umerma+"</span></span></div>";
+      });
+    });
+    var colabs=[];
+    recs.forEach(function(r){if(colabs.indexOf(r.responsable)===-1)colabs.push(r.responsable);});
+    var btnsPDF='<button class="btn btn-red" onclick="hacerPDF(\"'+fecha+'\")">PDF</button>';
+    var btnsXLS='<button class="btn btn-blue" onclick="excelFecha(\"'+fecha+'\")">Excel</button>';
+    var toggleFn='document.getElementById("'+bid+'").classList.toggle("open")';
+    html+='<div class="day">';
+    html+='<div class="day-h" onclick="'+toggleFn+'">'+'<b>'+fecha+'</b><span>'+recs.length+' productos</span></div>';
+    html+='<div class="day-b" id="'+bid+'">'+secs+'<div class="day-acts">'+btnsPDF+btnsXLS+'</div><div style="font-size:10px;color:#aaa;margin-top:6px">Colaboradores: '+colabs.join(", ")+'</div></div></div>';
+  });
+  document.getElementById("hlista").innerHTML=html;
+}
+function hacerPDF(fecha){
+  var sesion=getSesion();
+  var allRecs=HIST[fecha]||[];
+  var recs=sesion&&sesion.rol!=="admin"?allRecs.filter(function(r){return r.area===sesion.area;}):allRecs;
+  if(!recs.length){toast("Sin datos");return;}
+  if(typeof window.jspdf==="undefined"){toast("Cargando PDF...");return;}
+  var doc=new window.jspdf.jsPDF({orientation:"portrait",unit:"pt",format:"letter"});
+  var W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();
+  var ml=36,mr=36,cw=W-ml-mr;
+  var areas=sesion&&sesion.rol!=="admin"?[sesion.area]:["Cocina","Barra de Sushi","Barra de alcoholes"];
+  var first=true;
+  areas.forEach(function(area){
+    var items=recs.filter(function(p){return p.area===area;});
+    if(!items.length)return;
+    if(!first)doc.addPage();
+    first=false;
+    doc.setFont("helvetica","bold");doc.setFontSize(13);doc.setTextColor(0,0,0);
+    doc.text("REPORTE DE PRODUCTOS EN PROCESO",W/2,30,{align:"center"});
+    doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(60,60,60);
+    doc.text("La Rusia - Barra Nikkei",W/2,44,{align:"center"});
+    doc.setFontSize(8);doc.setTextColor(100,100,100);
+    doc.text("Fecha: "+fecha,W/2,56,{align:"center"});
+    doc.setDrawColor(0,0,0);doc.setLineWidth(0.8);doc.line(ml,66,W-mr,66);
+    var rh=22,hy=76;
+    var cols=[200,70,70,110,90];
+    var cx=[ml];
+    for(var i=1;i<cols.length;i++)cx.push(cx[i-1]+cols[i-1]);
+    doc.setFillColor(210,210,210);doc.rect(ml,hy,cw,rh,"F");
+    doc.setDrawColor(0,0,0);doc.setLineWidth(0.5);doc.rect(ml,hy,cw,rh,"S");
+    cx.forEach(function(x,i){if(i>0)doc.line(x,hy,x,hy+rh);});
+    doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(0,0,0);
+    ["PRODUCTO","STOCK","UNIDAD","MERMA","UNIDAD"].forEach(function(h,i){
+      doc.text(h,cx[i]+cols[i]/2,hy+rh/2+3,{align:"center"});
+    });
+    doc.setFont("helvetica","normal");doc.setFontSize(9);
+    for(var r=0;r<20;r++){
+      var y=hy+(r+1)*rh;
+      var p=items[r]||null;
+      if(r%2===1){doc.setFillColor(248,248,248);doc.rect(ml,y,cw,rh,"F");}
+      doc.setDrawColor(170,170,170);doc.setLineWidth(0.3);doc.rect(ml,y,cw,rh,"S");
+      cx.forEach(function(x,i){if(i>0)doc.line(x,y,x,y+rh);});
+      if(p){
+        doc.setTextColor(0,0,0);
+        doc.text(""+p.producto,cx[0]+6,y+rh/2+3);
+        doc.text(""+p.stock,cx[1]+cols[1]/2,y+rh/2+3,{align:"center"});
+        doc.text(""+p.ustock,cx[2]+cols[2]/2,y+rh/2+3,{align:"center"});
+        doc.text(""+p.merma,cx[3]+cols[3]/2,y+rh/2+3,{align:"center"});
+        doc.text(""+p.umerma,cx[4]+cols[4]/2,y+rh/2+3,{align:"center"});
+      }
+    }
+    var fy=hy+21*rh+8,fh=24,fc=[120,cw-120];
+    var colabs=[];
+    items.forEach(function(p){if(colabs.indexOf(p.responsable)===-1)colabs.push(p.responsable);});
+    [["FECHA",fecha],["NOMBRE COLABORADOR",colabs.join(", ")],["AREA:",area]].forEach(function(pair,i){
+      var y2=fy+i*fh;
+      doc.setDrawColor(0,0,0);doc.setLineWidth(0.5);
+      doc.rect(ml,y2,cw,fh,"S");doc.line(ml+fc[0],y2,ml+fc[0],y2+fh);
+      doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(0,0,0);
+      doc.text(pair[0],ml+6,y2+fh/2+3);
+      doc.setFont("helvetica","normal");doc.setFontSize(9);
+      doc.text(pair[1],ml+fc[0]+8,y2+fh/2+3);
+    });
+    doc.setDrawColor(180,180,180);doc.setLineWidth(0.4);doc.line(ml,H-26,W-mr,H-26);
+    doc.setFont("helvetica","italic");doc.setFontSize(7);doc.setTextColor(120,120,120);
+    doc.text("Optimizacion de procesos y control de gestion - Oscar M",W/2,H-14,{align:"center"});
+    doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(150,150,150);
+    doc.text("La Rusia Barra Nikkei | "+fecha,W/2,H-5,{align:"center"});
+  });
+  doc.save("reporte_"+fecha.replace(/\//g,"-")+".pdf");
+  toast("PDF generado");
+}
 function excelTodo(){var sesion=getSesion();if(typeof XLSX==="undefined"){toast("Cargando...");return;}var rows=[];Object.keys(HIST).sort(function(a,b){return a.split("/").reverse().join("").localeCompare(b.split("/").reverse().join(""));}).forEach(function(fecha){var recs=HIST[fecha]||[];var filtered=sesion&&sesion.rol!=="admin"?recs.filter(function(r){return r.area===sesion.area;}):recs;filtered.forEach(function(p){rows.push({"Fecha":p.fecha,"Hora":p.hora||"","Area":p.area,"Producto":p.producto,"Stock":p.stock,"Unidad Stock":p.ustock,"Merma":p.merma,"Unidad Merma":p.umerma,"% Merma":p.stock>0?parseFloat((p.merma/p.stock*100).toFixed(1)):0,"Colaborador":p.responsable});});});if(!rows.length){toast("Sin datos");return;}var wb=XLSX.utils.book_new();var ws=XLSX.utils.json_to_sheet(rows);ws["!cols"]=[{wch:12},{wch:8},{wch:20},{wch:24},{wch:8},{wch:12},{wch:8},{wch:12},{wch:9},{wch:24}];XLSX.utils.book_append_sheet(wb,ws,"Historial");XLSX.writeFile(wb,"inventario_larusia_"+new Date().toISOString().slice(0,10)+".xlsx");toast("Excel descargado");}
-function excelFecha(fecha){var sesion=getSesion();if(typeof XLSX==="undefined"){toast("Cargando...");return;}var allRecs=HIST[fecha]||[];var recs=sesion&&sesion.rol!=="admin"?allRecs.filter(function(r){return r.area===sesion.area;}):allRecs;if(!recs.length){toast("Sin datos");return;}var wb=XLSX.utils.book_new();var ws=XLSX.utils.json_to_sheet(recs.map(function(p){return{"Fecha":p.fecha,"Hora":p.hora||"","Area":p.area,"Producto":p.producto,"Stock":p.stock,"Unidad Stock":p.ustock,"Merma":p.merma,"Unidad Merma":p.umerma,"% Merma":p.stock>0?parseFloat((p.merma/p.stock*100).toFixed(1)):0,"Colaborador":p.responsable};}));ws["!cols"]=[{wch:12},{wch:8},{wch:20},{wch:24},{wch:8},{wch:12},{wch:8},{wch:12},{wch:9},{wch:24}];XLSX.utils.book_append_sheet(wb,ws,"Registro");XLSX.writeFile(wb,"registro_"+fecha.replace(///g,"-")+".xlsx");toast("Excel descargado");}
+function excelFecha(fecha){
+  var sesion=getSesion();
+  if(typeof XLSX==="undefined"){toast("Cargando...");return;}
+  var allRecs=HIST[fecha]||[];
+  var recs=sesion&&sesion.rol!=="admin"?allRecs.filter(function(r){return r.area===sesion.area;}):allRecs;
+  if(!recs.length){toast("Sin datos");return;}
+  var wb=XLSX.utils.book_new();
+  var ws=XLSX.utils.json_to_sheet(recs.map(function(p){
+    return {
+      "Fecha":p.fecha,"Hora":p.hora||"","Area":p.area,"Producto":p.producto,
+      "Stock":p.stock,"Unidad Stock":p.ustock,"Merma":p.merma,"Unidad Merma":p.umerma,
+      "% Merma":p.stock>0?parseFloat((p.merma/p.stock*100).toFixed(1)):0,
+      "Colaborador":p.responsable
+    };
+  }));
+  ws["!cols"]=[{wch:12},{wch:8},{wch:20},{wch:24},{wch:8},{wch:12},{wch:8},{wch:12},{wch:9},{wch:24}];
+  XLSX.utils.book_append_sheet(wb,ws,"Registro");
+  XLSX.writeFile(wb,"registro_"+fecha.replace(/\//g,"-")+".xlsx");
+  toast("Excel descargado");
+}
 function toast(msg){var t=document.getElementById("toast");t.textContent=msg;t.style.opacity=1;setTimeout(function(){t.style.opacity=0;},2400);}
 function initLogo(){
   var saved=localStorage.getItem("laRusiaLogo");
