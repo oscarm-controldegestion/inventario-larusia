@@ -199,7 +199,7 @@ function doLogin(){
   if(user){
     setSesion({usuario:user.usuario,nombre:user.nombre,rol:user.rol,area:user.area});
     document.getElementById("login-overlay").style.display="none";
-    document.getElementById("header-user").textContent="\u{1F464} "+user.nombre;
+    document.getElementById("header-user").textContent="👤 "+user.nombre;
     document.getElementById("logout-btn").style.display="block";
     document.getElementById("login-error").style.display="none";
     if(user.rol!=="admin"){document.getElementById("fresp").value=user.nombre;}
@@ -288,7 +288,7 @@ document.getElementById("logout-btn").addEventListener("click",doLogout);
 var _sesionActiva=getSesion();
 if(_sesionActiva){
   document.getElementById("login-overlay").style.display="none";
-  document.getElementById("header-user").textContent="\u{1F464} "+_sesionActiva.nombre;
+  document.getElementById("header-user").textContent="👤 "+_sesionActiva.nombre;
   document.getElementById("logout-btn").style.display="block";
   aplicarRestriccionArea();
 }
