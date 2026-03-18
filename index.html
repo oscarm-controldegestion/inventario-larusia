@@ -12,9 +12,13 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,sans-serif;background:#f0f0f0;max-width:430px;margin:0 auto;color:#111}
 #header{background:#fff;padding:12px 16px;border-bottom:2px solid #111;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
-#header .logo{width:36px;height:36px;background:#111;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+#header .logo{width:36px;height:36px;background:#111;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;cursor:pointer;overflow:hidden}
+#header .logo img{width:36px;height:36px;border-radius:50%;object-fit:cover}
 #header h1{font-size:16px;font-weight:700}
 #header p{font-size:11px;color:#666}
+#header-user{font-size:10px;color:#555;font-weight:600;margin-left:auto;white-space:nowrap}
+#logout-btn{background:none;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:700;color:#888;padding:5px 10px;cursor:pointer;margin-left:8px}
+#logout-btn:hover{border-color:#111;color:#111}
 #tabs{display:flex;background:#fff;border-bottom:2px solid #111;position:sticky;top:62px;z-index:99}
 .tab-btn{flex:1;padding:12px 4px;font-size:13px;text-align:center;cursor:pointer;background:none;border:none;border-bottom:3px solid transparent;font-weight:600;color:#888}
 .tab-btn.on{color:#111;border-bottom-color:#111}
@@ -76,25 +80,44 @@ input:focus,select:focus{border-color:#111;outline:none}
 .modal-box{background:#fff;border-radius:18px 18px 0 0;padding:20px 16px 40px;width:100%;max-width:430px}
 .modal-handle{width:36px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px}
 .modal-title{font-size:15px;font-weight:700;margin-bottom:14px}
-#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 20px;border-radius:24px;font-size:12px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 20px;border-radius:24px;font-size:12px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;white-space:nowrap}
 .filter-row{display:flex;gap:8px;margin-bottom:12px;align-items:flex-end}
 .filter-row .fg{flex:1;margin:0}
 .note{font-size:10px;color:#aaa;text-align:center;margin-top:5px}
-</style>
-</head>
+#login-overlay{position:fixed;inset:0;background:#111;display:flex;align-items:center;justify-content:center;z-index:9999;font-family:-apple-system,sans-serif}
+#login-box{background:#fff;border-radius:18px;padding:32px 28px;width:320px;max-width:90vw;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.4)}
+#login-box .login-logo{width:72px;height:72px;border-radius:50%;object-fit:cover;margin:0 auto 10px;display:block;border:3px solid #111}
+#login-box .login-logo-placeholder{width:72px;height:72px;border-radius:50%;background:#111;color:#fff;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+#login-box h2{font-size:20px;font-weight:800;margin-bottom:2px}
+#login-box .login-sub{font-size:11px;color:#888;margin-bottom:24px}
+#login-box input{width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;margin-bottom:12px;outline:none;transition:border .2s}
+#login-box input:focus{border-color:#111}
+#login-box .btn-login{width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
+#login-error{color:#c0392b;font-size:12px;margin-top:8px;display:none;font-weight:600}
+</style></head>
 <body>
-
-<div id="header">
-  <div class="logo">LR</div>
-  <div><h1>La Rusia</h1><p>Control de Inventario</p></div>
+<div id="login-overlay">
+  <div id="login-box">
+    <div id="login-logo-wrap"></div>
+    <h2>La Rusia</h2>
+    <p class="login-sub">Barra Nikkei &middot; Productos en Proceso</p>
+    <input type="text" id="login-user" placeholder="Usuario" autocomplete="username" />
+    <input type="password" id="login-pass" placeholder="Contrasena" autocomplete="current-password" />
+    <button class="btn-login" id="login-btn">Ingresar</button>
+    <div id="login-error">Usuario o contrasena incorrectos</div>
+  </div>
 </div>
-
+<div id="header">
+  <div class="logo" id="logo-btn">LR</div>
+  <div><h1>La Rusia</h1><p>Productos en Proceso</p></div>
+  <span id="header-user"></span>
+  <button id="logout-btn" style="display:none">Salir</button>
+</div>
 <div id="tabs">
   <button class="tab-btn on" onclick="goTab('hoy',this)">Hoy</button>
   <button class="tab-btn" onclick="goTab('agregar',this)">Agregar</button>
   <button class="tab-btn" onclick="goTab('historial',this)">Historial</button>
 </div>
-
 <div id="pg-hoy" class="page on">
   <div class="stats" id="stats">
     <div class="stat"><b id="s1">0</b><span>Hoy</span></div>
@@ -104,48 +127,32 @@ input:focus,select:focus{border-color:#111;outline:none}
   <div class="slbl">Registros de hoy</div>
   <div id="lista"></div>
 </div>
-
 <div id="pg-agregar" class="page">
   <div class="fg">
-    <label class="lbl">Area — elige primero</label>
+    <label class="lbl">Area</label>
     <select id="fa" onchange="cambiaArea()">
-      <option value="">— Seleccionar area —</option>
+      <option value="">-- Seleccionar area --</option>
       <option>Cocina</option>
       <option>Barra de Sushi</option>
       <option>Barra de alcoholes</option>
     </select>
   </div>
   <div id="fproductos" style="display:none">
-    <div class="fg">
-      <label class="lbl">Producto</label>
-      <select id="fsel" onchange="cambiaProducto()"></select>
-    </div>
-    <div id="fnuevo-grp" style="display:none" class="fg">
-      <label class="lbl">Nombre nuevo producto</label>
-      <input type="text" id="fnuevo" placeholder="Ej: Ceviche mixto...">
-    </div>
+    <div class="fg"><label class="lbl">Producto</label><select id="fsel" onchange="cambiaProducto()"></select></div>
+    <div id="fnuevo-grp" style="display:none" class="fg"><label class="lbl">Nombre nuevo producto</label><input type="text" id="fnuevo" placeholder="Ej: Ceviche mixto..."></div>
     <div class="fr">
       <div class="fg" style="margin:0"><label class="lbl">Stock</label><input type="number" id="fstock" placeholder="0" min="0" step="0.01"></div>
-      <div class="fg" style="margin:0"><label class="lbl">Unidad stock</label>
-        <select id="fustock"><option>kg</option><option>g</option><option>L</option><option>ml</option><option selected>unid</option><option>caja</option></select>
-      </div>
+      <div class="fg" style="margin:0"><label class="lbl">Unidad stock</label><select id="fustock"><option>kg</option><option>g</option><option>L</option><option>ml</option><option selected>unid</option><option>caja</option></select></div>
     </div>
     <div class="fr">
       <div class="fg" style="margin:0"><label class="lbl">Merma</label><input type="number" id="fmerma" placeholder="0" min="0" step="0.01"></div>
-      <div class="fg" style="margin:0"><label class="lbl">Unidad merma</label>
-        <select id="fumerma"><option>kg</option><option>g</option><option>L</option><option>ml</option><option selected>unid</option><option>%</option></select>
-      </div>
+      <div class="fg" style="margin:0"><label class="lbl">Unidad merma</label><select id="fumerma"><option>kg</option><option>g</option><option>L</option><option>ml</option><option selected>unid</option><option>%</option></select></div>
     </div>
-    <div class="fg">
-      <label class="lbl req">Nombre Colaborador La Rusia</label>
-      <input type="text" id="fresp" placeholder="Nombre Colaborador La Rusia">
-      <div class="err-txt" id="resp-err">Este campo es obligatorio</div>
-    </div>
+    <div class="fg"><label class="lbl req">Nombre Colaborador La Rusia</label><input type="text" id="fresp" placeholder="Nombre Colaborador La Rusia"><div class="err-txt" id="resp-err">Este campo es obligatorio</div></div>
     <button class="btn btn-dark" onclick="guardar()">Registrar producto</button>
   </div>
   <div id="fhint" class="hint">Selecciona un area para ver los productos disponibles.</div>
 </div>
-
 <div id="pg-historial" class="page">
   <div class="filter-row">
     <div class="fg"><label class="lbl">Filtrar por fecha</label><input type="date" id="ffecha" onchange="verHistorial()"></div>
@@ -155,13 +162,11 @@ input:focus,select:focus{border-color:#111;outline:none}
   <button class="btn btn-blue" onclick="excelTodo()" style="margin-top:14px">Descargar historial Excel</button>
   <p class="note">Una fila por registro, por fecha y area</p>
 </div>
-
 <div id="modal-edit" class="modal" onclick="cerrarModal(event)">
   <div class="modal-box">
     <div class="modal-handle"></div>
     <div class="modal-title">Editar registro</div>
-    <input type="hidden" id="eid">
-    <input type="hidden" id="efecha">
+    <input type="hidden" id="eid"><input type="hidden" id="efecha">
     <div class="fg"><label class="lbl">Producto</label><input type="text" id="eprod"></div>
     <div class="fr">
       <div class="fg" style="margin:0"><label class="lbl">Stock</label><input type="number" id="estock" min="0" step="0.01"></div>
@@ -171,393 +176,123 @@ input:focus,select:focus{border-color:#111;outline:none}
       <div class="fg" style="margin:0"><label class="lbl">Merma</label><input type="number" id="emerma" min="0" step="0.01"></div>
       <div class="fg" style="margin:0"><label class="lbl">Unidad</label><select id="eumerma"><option>kg</option><option>g</option><option>L</option><option>ml</option><option>unid</option><option>%</option></select></div>
     </div>
-    <div class="fg"><label class="lbl">Area</label>
-      <select id="earea"><option value="">—</option><option>Cocina</option><option>Barra de Sushi</option><option>Barra de alcoholes</option></select>
-    </div>
+    <div class="fg"><label class="lbl">Area</label><select id="earea"><option value="">--</option><option>Cocina</option><option>Barra de Sushi</option><option>Barra de alcoholes</option></select></div>
     <div class="fg"><label class="lbl req">Colaborador</label><input type="text" id="eresp"></div>
     <button class="btn btn-dark" onclick="guardarEdit()">Guardar cambios</button>
   </div>
 </div>
-
 <div id="toast"></div>
-
 <script>
-var CAT = {
-  "Cocina": ["Chashu","Fideos","Gyosa Cerdo","Gyosa Langostinos","Gyosa Pollo","Huevos","Wonton Camaron"],
-  "Barra de Sushi": ["Arroz Sushi","Atun","Camaron Cocido","Camaron Furay","Camaron Panko","Camaron Relleno","Centolla","C. Loco","C. Salmon","Jaiva","Langostinos","Ostion","Paleo Panko","Paleo Relleno","Pescado Blanco","Pollo","Producto Palta","Pulpo","Salmon","Tartaro","T. Salmon"],
-  "Barra de alcoholes": ["C. Aji Amarillo","C. Frutilla Campari","C. Kiwi","C. Naranja","C. Pina Asada","Goma","J. Frutilla","J. Mango","J. Maracuya","J. Pina","Limonada Menta","L. Tradicional","Red Rusia"]
-};
-var EXTRA = {"Cocina":[],"Barra de Sushi":[],"Barra de alcoholes":[]};
-var HIST = {};
-
-function cargar() {
-  try { var h = localStorage.getItem("lr2_hist"); if(h) HIST = JSON.parse(h); } catch(e){}
-  try { var e = localStorage.getItem("lr2_extra"); if(e) EXTRA = JSON.parse(e); } catch(e){}
+var USERS = [
+  {usuario:"admin",  clave:"rusia2024", nombre:"Administrador", rol:"admin", area:null},
+  {usuario:"cocina", clave:"cocina123", nombre:"Equipo Cocina",  rol:"user",  area:"Cocina"},
+  {usuario:"barra",  clave:"barra123",  nombre:"Equipo Barra",  rol:"user",  area:"Barra de alcoholes"},
+  {usuario:"sushi",  clave:"sushi123",  nombre:"Equipo Sushi",  rol:"user",  area:"Barra de Sushi"}
+];
+function getSesion(){try{return JSON.parse(sessionStorage.getItem("lr_session"));}catch(e){return null;}}
+function setSesion(data){sessionStorage.setItem("lr_session",JSON.stringify(data));}
+function clearSesion(){sessionStorage.removeItem("lr_session");}
+function doLogin(){
+  var u=document.getElementById("login-user").value.trim().toLowerCase();
+  var p=document.getElementById("login-pass").value;
+  var user=USERS.find(function(x){return x.usuario===u&&x.clave===p;});
+  if(user){
+    setSesion({usuario:user.usuario,nombre:user.nombre,rol:user.rol,area:user.area});
+    document.getElementById("login-overlay").style.display="none";
+    document.getElementById("header-user").textContent="\u{1F464} "+user.nombre;
+    document.getElementById("logout-btn").style.display="block";
+    document.getElementById("login-error").style.display="none";
+    if(user.rol!=="admin"){document.getElementById("fresp").value=user.nombre;}
+    aplicarRestriccionArea();
+    renderHoy();
+  }else{
+    document.getElementById("login-error").style.display="block";
+    document.getElementById("login-pass").value="";
+    document.getElementById("login-pass").focus();
+  }
 }
-function guardarLS() {
-  try { localStorage.setItem("lr2_hist", JSON.stringify(HIST)); localStorage.setItem("lr2_extra", JSON.stringify(EXTRA)); } catch(e){}
+function doLogout(){
+  if(!confirm("Cerrar sesion?"))return;
+  clearSesion();
+  document.getElementById("login-overlay").style.display="flex";
+  document.getElementById("header-user").textContent="";
+  document.getElementById("logout-btn").style.display="none";
+  document.getElementById("login-user").value="";
+  document.getElementById("login-pass").value="";
+  var sel=document.getElementById("fa");
+  sel.disabled=false;sel.style.background="";sel.style.color="";
 }
+function aplicarRestriccionArea(){
+  var sesion=getSesion();
+  if(!sesion)return;
+  var sel=document.getElementById("fa");
+  if(sesion.rol==="admin"){
+    sel.innerHTML='<option value="">-- Seleccionar area --</option><option>Cocina</option><option>Barra de Sushi</option><option>Barra de alcoholes</option>';
+    sel.disabled=false;sel.style.background="";sel.style.color="";
+  }else{
+    sel.innerHTML='<option value="'+sesion.area+'">'+sesion.area+'</option>';
+    sel.value=sesion.area;sel.disabled=true;
+    sel.style.background="#f5f5f5";sel.style.color="#555";
+    cambiaArea();
+  }
+}
+var CAT={"Cocina":["Chashu","Fideos","Gyosa Cerdo","Gyosa Langostinos","Gyosa Pollo","Huevos","Wonton Camaron"],"Barra de Sushi":["Arroz Sushi","Atun","Camaron Cocido","Camaron Furay","Camaron Panko","Camaron Relleno","Centolla","C. Loco","C. Salmon","Jaiva","Langostinos","Ostion","Paleo Panko","Paleo Relleno","Pescado Blanco","Pollo","Producto Palta","Pulpo","Salmon","Tartaro","T. Salmon"],"Barra de alcoholes":["C. Aji Amarillo","C. Frutilla Campari","C. Kiwi","C. Naranja","C. Pina Asada","Goma","J. Frutilla","J. Mango","J. Maracuya","J. Pina","Limonada Menta","L. Tradicional","Red Rusia"]};
+var EXTRA={"Cocina":[],"Barra de Sushi":[],"Barra de alcoholes":[]};
+var HIST={};
+function cargar(){try{var h=localStorage.getItem("lr2_hist");if(h)HIST=JSON.parse(h);}catch(e){}try{var e=localStorage.getItem("lr2_extra");if(e)EXTRA=JSON.parse(e);}catch(e){}}
+function guardarLS(){try{localStorage.setItem("lr2_hist",JSON.stringify(HIST));localStorage.setItem("lr2_extra",JSON.stringify(EXTRA));}catch(e){}}
 cargar();
-
-function hoy() {
-  var d = new Date();
-  return ("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear();
-}
-function hora() {
-  var d = new Date();
-  return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
-}
-function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
-function isoACL(iso) { if(!iso) return ""; var p=iso.split("-"); return p[2]+"/"+p[1]+"/"+p[0]; }
-
-function goTab(id, btn) {
-  document.querySelectorAll(".page").forEach(function(p){ p.classList.remove("on"); });
-  document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.remove("on"); });
-  document.getElementById("pg-"+id).classList.add("on");
-  btn.classList.add("on");
-  if(id==="historial") verHistorial();
-  if(id==="hoy") renderHoy();
-}
-
-function cambiaArea() {
-  var area = document.getElementById("fa").value;
-  if(!area) {
-    document.getElementById("fproductos").style.display = "none";
-    document.getElementById("fhint").style.display = "block";
-    return;
+function hoy(){var d=new Date();return ("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear();}
+function hora(){var d=new Date();return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function isoACL(iso){if(!iso)return "";var p=iso.split("-");return p[2]+"/"+p[1]+"/"+p[0];}
+function goTab(id,btn){document.querySelectorAll(".page").forEach(function(p){p.classList.remove("on");});document.querySelectorAll(".tab-btn").forEach(function(b){b.classList.remove("on");});document.getElementById("pg-"+id).classList.add("on");btn.classList.add("on");if(id==="historial")verHistorial();if(id==="hoy")renderHoy();}
+function cambiaArea(){var area=document.getElementById("fa").value;if(!area){document.getElementById("fproductos").style.display="none";document.getElementById("fhint").style.display="block";return;}document.getElementById("fhint").style.display="none";document.getElementById("fproductos").style.display="block";cargarProductos(area);document.getElementById("fsel").value="";document.getElementById("fnuevo-grp").style.display="none";}
+function cargarProductos(area){var base=CAT[area]||[];var extra=EXTRA[area]||[];var todos=base.concat(extra);var uniq=[];todos.forEach(function(v){if(uniq.indexOf(v)===-1)uniq.push(v);});uniq.sort(function(a,b){return a.localeCompare(b,"es");});var html='<option value="">-- Seleccionar producto --</option>';uniq.forEach(function(p){html+='<option value="'+p+'">'+p+'</option>';});html+='<option value="__nuevo__">+ Crear nuevo producto...</option>';document.getElementById("fsel").innerHTML=html;}
+function cambiaProducto(){var v=document.getElementById("fsel").value;document.getElementById("fnuevo-grp").style.display=v==="__nuevo__"?"block":"none";if(v==="__nuevo__")document.getElementById("fnuevo").focus();}
+function guardar(){var sesion=getSesion();if(!sesion){toast("Inicia sesion primero");return;}var area=document.getElementById("fa").value;var sel=document.getElementById("fsel").value;var prod=sel==="__nuevo__"?document.getElementById("fnuevo").value.trim():sel;var stock=parseFloat(document.getElementById("fstock").value)||0;var ustock=document.getElementById("fustock").value;var merma=parseFloat(document.getElementById("fmerma").value)||0;var umerma=document.getElementById("fumerma").value;var resp=document.getElementById("fresp").value.trim();if(!area){toast("Selecciona un area");return;}if(!prod){toast("Selecciona o ingresa un producto");return;}if(!resp){document.getElementById("fresp").classList.add("err-border");document.getElementById("resp-err").classList.add("show");document.getElementById("fresp").focus();return;}if(sel==="__nuevo__"&&prod){if(!EXTRA[area])EXTRA[area]=[];var todos=(CAT[area]||[]).concat(EXTRA[area]);var existe=false;todos.forEach(function(p){if(p.toLowerCase()===prod.toLowerCase())existe=true;});if(!existe)EXTRA[area].push(prod);cargarProductos(area);}var fecha=hoy();if(!HIST[fecha])HIST[fecha]=[];HIST[fecha].push({id:uid(),producto:prod,stock:stock,ustock:ustock,merma:merma,umerma:umerma,area:area,responsable:resp,fecha:fecha,hora:hora()});guardarLS();limpiarForm();renderHoy();toast("Producto registrado");document.querySelectorAll(".tab-btn")[0].click();}
+function limpiarForm(){var sesion=getSesion();document.getElementById("fa").value=sesion&&sesion.rol!=="admin"?sesion.area:"";document.getElementById("fsel").value="";document.getElementById("fnuevo").value="";document.getElementById("fnuevo-grp").style.display="none";if(!sesion||sesion.rol==="admin"){document.getElementById("fproductos").style.display="none";document.getElementById("fhint").style.display="block";}document.getElementById("fstock").value="";document.getElementById("fmerma").value="";if(sesion&&sesion.rol!=="admin"){document.getElementById("fresp").value=sesion.nombre;}else{document.getElementById("fresp").value="";}document.getElementById("fresp").classList.remove("err-border");document.getElementById("resp-err").classList.remove("show");}
+function renderHoy(){var sesion=getSesion();var todosRecs=HIST[hoy()]||[];var recs=sesion&&sesion.rol!=="admin"?todosRecs.filter(function(r){return r.area===sesion.area;}):todosRecs;var ts=0,tm=0;recs.forEach(function(p){ts+=(p.stock||0);tm+=(p.merma||0);});document.getElementById("s1").textContent=recs.length;document.getElementById("s2").textContent=ts.toFixed(1);document.getElementById("s3").textContent=tm.toFixed(1);if(!recs.length){document.getElementById("lista").innerHTML='<div class="empty">Sin registros hoy.<br>Toca Agregar para comenzar.</div>';return;}var rev=recs.slice().reverse();var html="";rev.forEach(function(p){var pct=p.stock>0?(p.merma/p.stock*100).toFixed(1):"0";var cls=pct>20?"hi":pct>10?"med":"";var vc=pct>20?"rd":pct>10?"am":"gn";var bc=p.area==="Cocina"?"bg-c":p.area==="Barra de Sushi"?"bg-s":"bg-b";html+='<div class="card '+cls+'">'+'<div class="card-head">'+'<div><span class="badge '+bc+'">'+p.area+'</span><div class="card-name">'+p.producto+'</div></div>'+'<div class="card-btns">'+'<button class="ibtn" onclick="abrirEdit(\''+p.id+'\',\''+p.fecha+'\')">&#9999;</button>'+'<button class="ibtn" onclick="borrar(\''+p.id+'\',\''+p.fecha+'\')">&#x2715;</button>'+'</div></div>'+'<div class="card-grid">'+'<div class="cf"><div class="cf-l">Stock</div><div class="cf-v gn">'+p.stock+' '+p.ustock+'</div></div>'+'<div class="cf"><div class="cf-l">Merma</div><div class="cf-v '+vc+'">'+p.merma+' '+p.umerma+'</div></div>'+'<div class="cf"><div class="cf-l">% Merma</div><div class="cf-v '+vc+'">'+pct+'%</div></div>'+'<div class="cf"><div class="cf-l">Area</div><div class="cf-v" style="font-size:11px;color:#333">'+p.area+'</div></div>'+'</div>'+'<div class="card-foot"><span>&#128100; '+p.responsable+'</span><span>'+p.hora+'</span></div>'+'</div>';});document.getElementById("lista").innerHTML=html;}
+function borrar(id,fecha){if(!confirm("Eliminar este registro?"))return;if(HIST[fecha])HIST[fecha]=HIST[fecha].filter(function(p){return p.id!==id;});guardarLS();renderHoy();toast("Eliminado");}
+function abrirEdit(id,fecha){var recs=HIST[fecha]||[];var p=null;recs.forEach(function(r){if(r.id===id)p=r;});if(!p)return;document.getElementById("eid").value=id;document.getElementById("efecha").value=fecha;document.getElementById("eprod").value=p.producto;document.getElementById("estock").value=p.stock;document.getElementById("eustock").value=p.ustock;document.getElementById("emerma").value=p.merma;document.getElementById("eumerma").value=p.umerma;document.getElementById("earea").value=p.area;document.getElementById("eresp").value=p.responsable;document.getElementById("modal-edit").classList.add("open");}
+function cerrarModal(e){if(e.target.id==="modal-edit")document.getElementById("modal-edit").classList.remove("open");}
+function guardarEdit(){var id=document.getElementById("eid").value;var fecha=document.getElementById("efecha").value;var resp=document.getElementById("eresp").value.trim();if(!resp){document.getElementById("eresp").classList.add("err-border");document.getElementById("eresp").focus();return;}var recs=HIST[fecha]||[];recs.forEach(function(p){if(p.id===id){p.producto=document.getElementById("eprod").value.trim()||p.producto;p.stock=parseFloat(document.getElementById("estock").value)||0;p.ustock=document.getElementById("eustock").value;p.merma=parseFloat(document.getElementById("emerma").value)||0;p.umerma=document.getElementById("eumerma").value;p.area=document.getElementById("earea").value||p.area;p.responsable=resp;}});document.getElementById("eresp").classList.remove("err-border");document.getElementById("modal-edit").classList.remove("open");guardarLS();renderHoy();verHistorial();toast("Cambios guardados");}
+function verHistorial(){var sesion=getSesion();var filtro=document.getElementById("ffecha").value;var filtroCL=filtro?isoACL(filtro):"";var fechas=Object.keys(HIST).sort(function(a,b){var pa=a.split("/").reverse().join(""),pb=b.split("/").reverse().join("");return pb.localeCompare(pa);});var lista=filtroCL?fechas.filter(function(f){return f===filtroCL;}):fechas;if(!lista.length){document.getElementById("hlista").innerHTML='<div class="empty">Sin registros'+(filtroCL?" para "+filtroCL:"")+'.</div>';return;}var html="";lista.forEach(function(fecha){var allRecs=HIST[fecha]||[];var recs=sesion&&sesion.rol!=="admin"?allRecs.filter(function(r){return r.area===sesion.area;}):allRecs;if(!recs.length)return;var areas=[];recs.forEach(function(r){if(areas.indexOf(r.area)===-1)areas.push(r.area);});var bid="b"+fecha.replace(///g,"-");var secs="";areas.forEach(function(area){var items=recs.filter(function(r){return r.area===area;});var bc=area==="Cocina"?"bg-c":area==="Barra de Sushi"?"bg-s":"bg-b";secs+='<div class="area-t"><span class="badge '+bc+'">'+area+'</span></div>';items.forEach(function(p){secs+='<div class="hr"><span class="hr-p">'+p.producto+'</span><span class="hr-n"><span>'+p.stock+' '+p.ustock+'</span><span>Merma:'+p.merma+' '+p.umerma+'</span></span></div>';});});var colabs=[];recs.forEach(function(r){if(colabs.indexOf(r.responsable)===-1)colabs.push(r.responsable);});html+='<div class="day">'+'<div class="day-h" onclick="document.getElementById(\''+bid+'\').classList.toggle(\'open\')">'+'<b>'+fecha+'</b><span>'+recs.length+' productos</span>'+'</div>'+'<div class="day-b" id="'+bid+'">'+secs+'<div class="day-acts">'+'<button class="btn btn-red" onclick="hacerPDF(\''+fecha+'\')">PDF</button>'+'<button class="btn btn-blue" onclick="excelFecha(\''+fecha+'\')">Excel</button>'+'</div>'+'<div style="font-size:10px;color:#aaa;margin-top:6px">Colaboradores: '+colabs.join(", ")+'</div>'+'</div></div>';});document.getElementById("hlista").innerHTML=html;}
+function hacerPDF(fecha){var sesion=getSesion();var allRecs=HIST[fecha]||[];var recs=sesion&&sesion.rol!=="admin"?allRecs.filter(function(r){return r.area===sesion.area;}):allRecs;if(!recs.length){toast("Sin datos");return;}if(typeof window.jspdf==="undefined"){toast("Cargando PDF...");return;}var doc=new window.jspdf.jsPDF({orientation:"portrait",unit:"pt",format:"letter"});var W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();var ml=36,mr=36,cw=W-ml-mr;var areas=sesion&&sesion.rol!=="admin"?[sesion.area]:["Cocina","Barra de Sushi","Barra de alcoholes"];var first=true;areas.forEach(function(area){var items=recs.filter(function(p){return p.area===area;});if(!items.length)return;if(!first)doc.addPage();first=false;doc.setFont("helvetica","bold");doc.setFontSize(13);doc.setTextColor(0,0,0);doc.text("REPORTE DE PRODUCTOS EN PROCESO",W/2,30,{align:"center"});doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(60,60,60);doc.text("La Rusia - Barra Nikkei",W/2,44,{align:"center"});doc.setFontSize(8);doc.setTextColor(100,100,100);doc.text("Fecha: "+fecha,W/2,56,{align:"center"});doc.setDrawColor(0,0,0);doc.setLineWidth(0.8);doc.line(ml,66,W-mr,66);var rh=22,hy=76;var cols=[200,70,70,110,90];var cx=[ml];for(var i=1;i<cols.length;i++)cx.push(cx[i-1]+cols[i-1]);doc.setFillColor(210,210,210);doc.rect(ml,hy,cw,rh,"F");doc.setDrawColor(0,0,0);doc.setLineWidth(0.5);doc.rect(ml,hy,cw,rh,"S");cx.forEach(function(x,i){if(i>0)doc.line(x,hy,x,hy+rh);});doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(0,0,0);["PRODUCTO","STOCK","UNIDAD","MERMA","UNIDAD"].forEach(function(h,i){doc.text(h,cx[i]+cols[i]/2,hy+rh/2+3,{align:"center"});});doc.setFont("helvetica","normal");doc.setFontSize(9);for(var r=0;r<20;r++){var y=hy+(r+1)*rh;var p=items[r]||null;if(r%2===1){doc.setFillColor(248,248,248);doc.rect(ml,y,cw,rh,"F");}doc.setDrawColor(170,170,170);doc.setLineWidth(0.3);doc.rect(ml,y,cw,rh,"S");cx.forEach(function(x,i){if(i>0)doc.line(x,y,x,y+rh);});if(p){doc.setTextColor(0,0,0);doc.text(""+p.producto,cx[0]+6,y+rh/2+3);doc.text(""+p.stock,cx[1]+cols[1]/2,y+rh/2+3,{align:"center"});doc.text(""+p.ustock,cx[2]+cols[2]/2,y+rh/2+3,{align:"center"});doc.text(""+p.merma,cx[3]+cols[3]/2,y+rh/2+3,{align:"center"});doc.text(""+p.umerma,cx[4]+cols[4]/2,y+rh/2+3,{align:"center"});}}var fy=hy+21*rh+8,fh=24,fc=[120,cw-120];var colabs=[];items.forEach(function(p){if(colabs.indexOf(p.responsable)===-1)colabs.push(p.responsable);});[["FECHA",fecha],["NOMBRE COLABORADOR",colabs.join(", ")],["AREA:",area]].forEach(function(pair,i){var y2=fy+i*fh;doc.setDrawColor(0,0,0);doc.setLineWidth(0.5);doc.rect(ml,y2,cw,fh,"S");doc.line(ml+fc[0],y2,ml+fc[0],y2+fh);doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(0,0,0);doc.text(pair[0],ml+6,y2+fh/2+3);doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text(pair[1],ml+fc[0]+8,y2+fh/2+3);});doc.setDrawColor(180,180,180);doc.setLineWidth(0.4);doc.line(ml,H-26,W-mr,H-26);doc.setFont("helvetica","italic");doc.setFontSize(7);doc.setTextColor(120,120,120);doc.text("Optimizacion de procesos y control de gestion - Oscar M",W/2,H-14,{align:"center"});doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(150,150,150);doc.text("La Rusia Barra Nikkei | "+fecha,W/2,H-5,{align:"center"});});doc.save("reporte_"+fecha.replace(///g,"-")+".pdf");toast("PDF generado");}
+function excelTodo(){var sesion=getSesion();if(typeof XLSX==="undefined"){toast("Cargando...");return;}var rows=[];Object.keys(HIST).sort(function(a,b){return a.split("/").reverse().join("").localeCompare(b.split("/").reverse().join(""));}).forEach(function(fecha){var recs=HIST[fecha]||[];var filtered=sesion&&sesion.rol!=="admin"?recs.filter(function(r){return r.area===sesion.area;}):recs;filtered.forEach(function(p){rows.push({"Fecha":p.fecha,"Hora":p.hora||"","Area":p.area,"Producto":p.producto,"Stock":p.stock,"Unidad Stock":p.ustock,"Merma":p.merma,"Unidad Merma":p.umerma,"% Merma":p.stock>0?parseFloat((p.merma/p.stock*100).toFixed(1)):0,"Colaborador":p.responsable});});});if(!rows.length){toast("Sin datos");return;}var wb=XLSX.utils.book_new();var ws=XLSX.utils.json_to_sheet(rows);ws["!cols"]=[{wch:12},{wch:8},{wch:20},{wch:24},{wch:8},{wch:12},{wch:8},{wch:12},{wch:9},{wch:24}];XLSX.utils.book_append_sheet(wb,ws,"Historial");XLSX.writeFile(wb,"inventario_larusia_"+new Date().toISOString().slice(0,10)+".xlsx");toast("Excel descargado");}
+function excelFecha(fecha){var sesion=getSesion();if(typeof XLSX==="undefined"){toast("Cargando...");return;}var allRecs=HIST[fecha]||[];var recs=sesion&&sesion.rol!=="admin"?allRecs.filter(function(r){return r.area===sesion.area;}):allRecs;if(!recs.length){toast("Sin datos");return;}var wb=XLSX.utils.book_new();var ws=XLSX.utils.json_to_sheet(recs.map(function(p){return{"Fecha":p.fecha,"Hora":p.hora||"","Area":p.area,"Producto":p.producto,"Stock":p.stock,"Unidad Stock":p.ustock,"Merma":p.merma,"Unidad Merma":p.umerma,"% Merma":p.stock>0?parseFloat((p.merma/p.stock*100).toFixed(1)):0,"Colaborador":p.responsable};}));ws["!cols"]=[{wch:12},{wch:8},{wch:20},{wch:24},{wch:8},{wch:12},{wch:8},{wch:12},{wch:9},{wch:24}];XLSX.utils.book_append_sheet(wb,ws,"Registro");XLSX.writeFile(wb,"registro_"+fecha.replace(///g,"-")+".xlsx");toast("Excel descargado");}
+function toast(msg){var t=document.getElementById("toast");t.textContent=msg;t.style.opacity=1;setTimeout(function(){t.style.opacity=0;},2400);}
+function initLogo(){
+  var saved=localStorage.getItem("laRusiaLogo");
+  var logoBtn=document.getElementById("logo-btn");
+  var wrap=document.getElementById("login-logo-wrap");
+  function setLogoImg(src){
+    logoBtn.innerHTML='<img src="'+src+'" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">';  
+    if(wrap){wrap.innerHTML='<img class="login-logo" src="'+src+'">';}  
   }
-  document.getElementById("fhint").style.display = "none";
-  document.getElementById("fproductos").style.display = "block";
-  cargarProductos(area);
-  document.getElementById("fsel").value = "";
-  document.getElementById("fnuevo-grp").style.display = "none";
-}
-
-function cargarProductos(area) {
-  var base = CAT[area] || [];
-  var extra = EXTRA[area] || [];
-  var todos = base.concat(extra);
-  var uniq = [];
-  todos.forEach(function(v){ if(uniq.indexOf(v)===-1) uniq.push(v); });
-  uniq.sort(function(a,b){ return a.localeCompare(b,"es"); });
-  var html = '<option value="">— Seleccionar producto —</option>';
-  uniq.forEach(function(p){ html += '<option value="'+p+'">'+p+'</option>'; });
-  html += '<option value="__nuevo__">+ Crear nuevo producto...</option>';
-  document.getElementById("fsel").innerHTML = html;
-}
-
-function cambiaProducto() {
-  var v = document.getElementById("fsel").value;
-  document.getElementById("fnuevo-grp").style.display = v==="__nuevo__" ? "block" : "none";
-  if(v==="__nuevo__") document.getElementById("fnuevo").focus();
-}
-
-function guardar() {
-  var area = document.getElementById("fa").value;
-  var sel = document.getElementById("fsel").value;
-  var prod = sel==="__nuevo__" ? document.getElementById("fnuevo").value.trim() : sel;
-  var stock = parseFloat(document.getElementById("fstock").value) || 0;
-  var ustock = document.getElementById("fustock").value;
-  var merma = parseFloat(document.getElementById("fmerma").value) || 0;
-  var umerma = document.getElementById("fumerma").value;
-  var resp = document.getElementById("fresp").value.trim();
-
-  if(!area) { toast("Selecciona un area"); return; }
-  if(!prod) { toast("Selecciona o ingresa un producto"); return; }
-  if(!resp) {
-    document.getElementById("fresp").classList.add("err-border");
-    document.getElementById("resp-err").classList.add("show");
-    document.getElementById("fresp").focus();
-    return;
-  }
-
-  if(sel==="__nuevo__" && prod) {
-    if(!EXTRA[area]) EXTRA[area]=[];
-    var todos = (CAT[area]||[]).concat(EXTRA[area]);
-    var existe = false;
-    todos.forEach(function(p){ if(p.toLowerCase()===prod.toLowerCase()) existe=true; });
-    if(!existe) EXTRA[area].push(prod);
-    cargarProductos(area);
-  }
-
-  var fecha = hoy();
-  if(!HIST[fecha]) HIST[fecha] = [];
-  HIST[fecha].push({
-    id: uid(), producto: prod, stock: stock, ustock: ustock,
-    merma: merma, umerma: umerma, area: area,
-    responsable: resp, fecha: fecha, hora: hora()
+  if(saved)setLogoImg(saved);
+  var fi=document.createElement("input");fi.type="file";fi.accept="image/*";fi.style.display="none";fi.id="logoFileInput";document.body.appendChild(fi);
+  logoBtn.style.cursor="pointer";
+  logoBtn.addEventListener("click",function(){fi.click();});
+  fi.addEventListener("change",function(e){
+    var file=e.target.files[0];if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(ev){localStorage.setItem("laRusiaLogo",ev.target.result);setLogoImg(ev.target.result);};
+    reader.readAsDataURL(file);
   });
-
-  guardarLS();
-  limpiarForm();
-  renderHoy();
-  toast("Producto registrado");
-  document.querySelectorAll(".tab-btn")[0].click();
 }
-
-function limpiarForm() {
-  document.getElementById("fa").value = "";
-  document.getElementById("fsel").value = "";
-  document.getElementById("fnuevo").value = "";
-  document.getElementById("fnuevo-grp").style.display = "none";
-  document.getElementById("fproductos").style.display = "none";
-  document.getElementById("fhint").style.display = "block";
-  document.getElementById("fstock").value = "";
-  document.getElementById("fmerma").value = "";
-  document.getElementById("fresp").value = "";
-  document.getElementById("fresp").classList.remove("err-border");
-  document.getElementById("resp-err").classList.remove("show");
+document.getElementById("login-btn").addEventListener("click",doLogin);
+document.getElementById("login-pass").addEventListener("keydown",function(e){if(e.key==="Enter")doLogin();});
+document.getElementById("login-user").addEventListener("keydown",function(e){if(e.key==="Enter")document.getElementById("login-pass").focus();});
+document.getElementById("logout-btn").addEventListener("click",doLogout);
+var _sesionActiva=getSesion();
+if(_sesionActiva){
+  document.getElementById("login-overlay").style.display="none";
+  document.getElementById("header-user").textContent="\u{1F464} "+_sesionActiva.nombre;
+  document.getElementById("logout-btn").style.display="block";
+  aplicarRestriccionArea();
 }
-
-function renderHoy() {
-  var recs = HIST[hoy()] || [];
-  var ts = 0, tm = 0;
-  recs.forEach(function(p){ ts += (p.stock||0); tm += (p.merma||0); });
-  document.getElementById("s1").textContent = recs.length;
-  document.getElementById("s2").textContent = ts.toFixed(1);
-  document.getElementById("s3").textContent = tm.toFixed(1);
-
-  if(!recs.length) {
-    document.getElementById("lista").innerHTML = '<div class="empty">Sin registros hoy.<br>Toca Agregar para comenzar.</div>';
-    return;
-  }
-
-  var rev = recs.slice().reverse();
-  var html = "";
-  rev.forEach(function(p) {
-    var pct = p.stock>0 ? (p.merma/p.stock*100).toFixed(1) : "0";
-    var cls = pct>20 ? "hi" : pct>10 ? "med" : "";
-    var vc = pct>20 ? "rd" : pct>10 ? "am" : "gn";
-    var bc = p.area==="Cocina" ? "bg-c" : p.area==="Barra de Sushi" ? "bg-s" : "bg-b";
-    html += '<div class="card '+cls+'">'+
-      '<div class="card-head">'+
-        '<div><span class="badge '+bc+'">'+p.area+'</span><div class="card-name">'+p.producto+'</div></div>'+
-        '<div class="card-btns">'+
-          '<button class="ibtn" onclick="abrirEdit(\''+p.id+'\',\''+p.fecha+'\')">&#9999;</button>'+
-          '<button class="ibtn" onclick="borrar(\''+p.id+'\',\''+p.fecha+'\')">&#x2715;</button>'+
-        '</div>'+
-      '</div>'+
-      '<div class="card-grid">'+
-        '<div class="cf"><div class="cf-l">Stock</div><div class="cf-v gn">'+p.stock+' '+p.ustock+'</div></div>'+
-        '<div class="cf"><div class="cf-l">Merma</div><div class="cf-v '+vc+'">'+p.merma+' '+p.umerma+'</div></div>'+
-        '<div class="cf"><div class="cf-l">% Merma</div><div class="cf-v '+vc+'">'+pct+'%</div></div>'+
-        '<div class="cf"><div class="cf-l">Area</div><div class="cf-v" style="font-size:11px;color:#333">'+p.area+'</div></div>'+
-      '</div>'+
-      '<div class="card-foot"><span>&#128100; '+p.responsable+'</span><span>'+p.hora+'</span></div>'+
-    '</div>';
-  });
-  document.getElementById("lista").innerHTML = html;
-}
-
-function borrar(id, fecha) {
-  if(!confirm("Eliminar este registro?")) return;
-  if(HIST[fecha]) HIST[fecha] = HIST[fecha].filter(function(p){ return p.id!==id; });
-  guardarLS();
-  renderHoy();
-  toast("Eliminado");
-}
-
-function abrirEdit(id, fecha) {
-  var recs = HIST[fecha] || [];
-  var p = null;
-  recs.forEach(function(r){ if(r.id===id) p=r; });
-  if(!p) return;
-  document.getElementById("eid").value = id;
-  document.getElementById("efecha").value = fecha;
-  document.getElementById("eprod").value = p.producto;
-  document.getElementById("estock").value = p.stock;
-  document.getElementById("eustock").value = p.ustock;
-  document.getElementById("emerma").value = p.merma;
-  document.getElementById("eumerma").value = p.umerma;
-  document.getElementById("earea").value = p.area;
-  document.getElementById("eresp").value = p.responsable;
-  document.getElementById("modal-edit").classList.add("open");
-}
-
-function cerrarModal(e) {
-  if(e.target.id==="modal-edit") document.getElementById("modal-edit").classList.remove("open");
-}
-
-function guardarEdit() {
-  var id = document.getElementById("eid").value;
-  var fecha = document.getElementById("efecha").value;
-  var resp = document.getElementById("eresp").value.trim();
-  if(!resp) { document.getElementById("eresp").classList.add("err-border"); document.getElementById("eresp").focus(); return; }
-  var recs = HIST[fecha] || [];
-  recs.forEach(function(p) {
-    if(p.id===id) {
-      p.producto = document.getElementById("eprod").value.trim() || p.producto;
-      p.stock = parseFloat(document.getElementById("estock").value) || 0;
-      p.ustock = document.getElementById("eustock").value;
-      p.merma = parseFloat(document.getElementById("emerma").value) || 0;
-      p.umerma = document.getElementById("eumerma").value;
-      p.area = document.getElementById("earea").value || p.area;
-      p.responsable = resp;
-    }
-  });
-  document.getElementById("eresp").classList.remove("err-border");
-  document.getElementById("modal-edit").classList.remove("open");
-  guardarLS();
-  renderHoy();
-  verHistorial();
-  toast("Cambios guardados");
-}
-
-function verHistorial() {
-  var filtro = document.getElementById("ffecha").value;
-  var filtroCL = filtro ? isoACL(filtro) : "";
-  var fechas = Object.keys(HIST).sort(function(a,b){
-    var pa=a.split("/").reverse().join(""), pb=b.split("/").reverse().join("");
-    return pb.localeCompare(pa);
-  });
-  var lista = filtroCL ? fechas.filter(function(f){ return f===filtroCL; }) : fechas;
-  if(!lista.length) {
-    document.getElementById("hlista").innerHTML = '<div class="empty">Sin registros'+(filtroCL?" para "+filtroCL:"")+'.</div>';
-    return;
-  }
-  var html = "";
-  lista.forEach(function(fecha) {
-    var recs = HIST[fecha] || [];
-    var areas = [];
-    recs.forEach(function(r){ if(areas.indexOf(r.area)===-1) areas.push(r.area); });
-    var bid = "b"+fecha.replace(/\//g,"-");
-    var secs = "";
-    areas.forEach(function(area) {
-      var items = recs.filter(function(r){ return r.area===area; });
-      var bc = area==="Cocina"?"bg-c":area==="Barra de Sushi"?"bg-s":"bg-b";
-      secs += '<div class="area-t"><span class="badge '+bc+'">'+area+'</span></div>';
-      items.forEach(function(p){
-        secs += '<div class="hr"><span class="hr-p">'+p.producto+'</span><span class="hr-n"><span>'+p.stock+' '+p.ustock+'</span><span>Merma:'+p.merma+' '+p.umerma+'</span></span></div>';
-      });
-    });
-    var colabs = [];
-    recs.forEach(function(r){ if(colabs.indexOf(r.responsable)===-1) colabs.push(r.responsable); });
-    html += '<div class="day">'+
-      '<div class="day-h" onclick="document.getElementById(\''+bid+'\').classList.toggle(\'open\')">'+
-        '<b>'+fecha+'</b><span>'+recs.length+' productos</span>'+
-      '</div>'+
-      '<div class="day-b" id="'+bid+'">'+
-        secs+
-        '<div class="day-acts">'+
-          '<button class="btn btn-red" onclick="hacerPDF(\''+fecha+'\')">PDF</button>'+
-          '<button class="btn btn-blue" onclick="excelFecha(\''+fecha+'\')">Excel</button>'+
-        '</div>'+
-        '<div style="font-size:10px;color:#aaa;margin-top:6px">Colaboradores: '+colabs.join(", ")+'</div>'+
-      '</div>'+
-    '</div>';
-  });
-  document.getElementById("hlista").innerHTML = html;
-}
-
-function hacerPDF(fecha) {
-  var recs = HIST[fecha] || [];
-  if(!recs.length) { toast("Sin datos"); return; }
-  if(typeof window.jspdf === "undefined") { toast("Cargando PDF..."); return; }
-  var doc = new window.jspdf.jsPDF({orientation:"portrait",unit:"pt",format:"letter"});
-  var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
-  var ml=36, mr=36, cw=W-ml-mr;
-  var areas = ["Cocina","Barra de Sushi","Barra de alcoholes"];
-  var first = true;
-  areas.forEach(function(area) {
-    var items = recs.filter(function(p){ return p.area===area; });
-    if(!items.length) return;
-    if(!first) doc.addPage();
-    first = false;
-    doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.setTextColor(0,0,0);
-    doc.text("REPORTE DE PRODUCTOS EN PROCESO", W/2, 30, {align:"center"});
-    doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(60,60,60);
-    doc.text("La Rusia - Barra Nikkei", W/2, 44, {align:"center"});
-    doc.setFontSize(8); doc.setTextColor(100,100,100);
-    doc.text("Fecha: "+fecha, W/2, 56, {align:"center"});
-    doc.setDrawColor(0,0,0); doc.setLineWidth(0.8); doc.line(ml,66,W-mr,66);
-    var rh=22, hy=76;
-    var cols=[200,70,70,110,90];
-    var cx=[ml]; for(var i=1;i<cols.length;i++) cx.push(cx[i-1]+cols[i-1]);
-    doc.setFillColor(210,210,210); doc.rect(ml,hy,cw,rh,"F");
-    doc.setDrawColor(0,0,0); doc.setLineWidth(0.5); doc.rect(ml,hy,cw,rh,"S");
-    cx.forEach(function(x,i){ if(i>0) doc.line(x,hy,x,hy+rh); });
-    doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(0,0,0);
-    ["PRODUCTO","STOCK","UNIDAD","MERMA","UNIDAD"].forEach(function(h,i){
-      doc.text(h, cx[i]+cols[i]/2, hy+rh/2+3, {align:"center"});
-    });
-    doc.setFont("helvetica","normal"); doc.setFontSize(9);
-    for(var r=0;r<20;r++) {
-      var y=hy+(r+1)*rh; var p=items[r]||null;
-      if(r%2===1){ doc.setFillColor(248,248,248); doc.rect(ml,y,cw,rh,"F"); }
-      doc.setDrawColor(170,170,170); doc.setLineWidth(0.3); doc.rect(ml,y,cw,rh,"S");
-      cx.forEach(function(x,i){ if(i>0) doc.line(x,y,x,y+rh); });
-      if(p) {
-        doc.setTextColor(0,0,0);
-        doc.text(""+p.producto, cx[0]+6, y+rh/2+3);
-        doc.text(""+p.stock, cx[1]+cols[1]/2, y+rh/2+3, {align:"center"});
-        doc.text(""+p.ustock, cx[2]+cols[2]/2, y+rh/2+3, {align:"center"});
-        doc.text(""+p.merma, cx[3]+cols[3]/2, y+rh/2+3, {align:"center"});
-        doc.text(""+p.umerma, cx[4]+cols[4]/2, y+rh/2+3, {align:"center"});
-      }
-    }
-    var fy=hy+21*rh+8, fh=24, fc=[120,cw-120];
-    var colabs=[]; items.forEach(function(p){ if(colabs.indexOf(p.responsable)===-1) colabs.push(p.responsable); });
-    [["FECHA",fecha],["NOMBRE COLABORADOR",colabs.join(", ")],["AREA:",area]].forEach(function(pair,i){
-      var y2=fy+i*fh;
-      doc.setDrawColor(0,0,0); doc.setLineWidth(0.5); doc.rect(ml,y2,cw,fh,"S");
-      doc.line(ml+fc[0],y2,ml+fc[0],y2+fh);
-      doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(0,0,0);
-      doc.text(pair[0], ml+6, y2+fh/2+3);
-      doc.setFont("helvetica","normal"); doc.setFontSize(9);
-      doc.text(pair[1], ml+fc[0]+8, y2+fh/2+3);
-    });
-    doc.setDrawColor(180,180,180); doc.setLineWidth(0.4); doc.line(ml,H-26,W-mr,H-26);
-    doc.setFont("helvetica","italic"); doc.setFontSize(7); doc.setTextColor(120,120,120);
-    doc.text("Optimizacion de procesos y control de gestion - Oscar M", W/2, H-14, {align:"center"});
-    doc.setFont("helvetica","normal"); doc.setFontSize(7); doc.setTextColor(150,150,150);
-    doc.text("La Rusia Barra Nikkei | "+fecha, W/2, H-5, {align:"center"});
-  });
-  doc.save("reporte_"+fecha.replace(/\//g,"-")+".pdf");
-  toast("PDF generado");
-}
-
-function excelTodo() {
-  if(typeof XLSX==="undefined") { toast("Cargando..."); return; }
-  var rows = [];
-  Object.keys(HIST).sort(function(a,b){ return a.split("/").reverse().join("").localeCompare(b.split("/").reverse().join("")); }).forEach(function(fecha){
-    (HIST[fecha]||[]).forEach(function(p){
-      rows.push({"Fecha":p.fecha,"Hora":p.hora||"","Area":p.area,"Producto":p.producto,
-        "Stock":p.stock,"Unidad Stock":p.ustock,"Merma":p.merma,"Unidad Merma":p.umerma,
-        "% Merma":p.stock>0?parseFloat((p.merma/p.stock*100).toFixed(1)):0,"Colaborador":p.responsable});
-    });
-  });
-  if(!rows.length) { toast("Sin datos"); return; }
-  var wb = XLSX.utils.book_new();
-  var ws = XLSX.utils.json_to_sheet(rows);
-  ws["!cols"] = [{wch:12},{wch:8},{wch:20},{wch:24},{wch:8},{wch:12},{wch:8},{wch:12},{wch:9},{wch:24}];
-  XLSX.utils.book_append_sheet(wb, ws, "Historial");
-  XLSX.writeFile(wb, "inventario_larusia_"+new Date().toISOString().slice(0,10)+".xlsx");
-  toast("Excel descargado");
-}
-
-function excelFecha(fecha) {
-  if(typeof XLSX==="undefined") { toast("Cargando..."); return; }
-  var recs = HIST[fecha] || [];
-  if(!recs.length) { toast("Sin datos"); return; }
-  var wb = XLSX.utils.book_new();
-  var ws = XLSX.utils.json_to_sheet(recs.map(function(p){
-    return {"Fecha":p.fecha,"Hora":p.hora||"","Area":p.area,"Producto":p.producto,
-      "Stock":p.stock,"Unidad Stock":p.ustock,"Merma":p.merma,"Unidad Merma":p.umerma,
-      "% Merma":p.stock>0?parseFloat((p.merma/p.stock*100).toFixed(1)):0,"Colaborador":p.responsable};
-  }));
-  ws["!cols"] = [{wch:12},{wch:8},{wch:20},{wch:24},{wch:8},{wch:12},{wch:8},{wch:12},{wch:9},{wch:24}];
-  XLSX.utils.book_append_sheet(wb, ws, "Registro");
-  XLSX.writeFile(wb, "registro_"+fecha.replace(/\//g,"-")+".xlsx");
-  toast("Excel descargado");
-}
-
-function toast(msg) {
-  var t = document.getElementById("toast");
-  t.textContent = msg;
-  t.style.opacity = 1;
-  setTimeout(function(){ t.style.opacity = 0; }, 2400);
-}
-
+initLogo();
 renderHoy();
 </script>
 </body>
