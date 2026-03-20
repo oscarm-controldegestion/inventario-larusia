@@ -192,9 +192,9 @@ var USERS = [
   {usuario:"barra",  clave:"barra123",  nombre:"Equipo Barra",  rol:"user",  area:"Barra de alcoholes"},
   {usuario:"sushi",  clave:"sushi123",  nombre:"Equipo Sushi",  rol:"user",  area:"Barra de Sushi"}
 ];
-function getSesion(){try{return JSON.parse(sessionStorage.getItem("lr_session"));}catch(e){return null;}}
-function setSesion(data){sessionStorage.setItem("lr_session",JSON.stringify(data));}
-function clearSesion(){sessionStorage.removeItem("lr_session");}
+function getSesion(){try{return JSON.parse(localStorage.getItem("lr_session"));}catch(e){return null;}}
+function setSesion(data){localStorage.setItem("lr_session",JSON.stringify(data));}
+function clearSesion(){localStorage.removeItem("lr_session");}
 function doLogin(){
   var u=document.getElementById("login-user").value.trim().toLowerCase();
   var p=document.getElementById("login-pass").value;
