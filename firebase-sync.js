@@ -45,7 +45,7 @@ const _db = firebase.database();
   const _removeItem = Storage.prototype.removeItem.bind(localStorage);
 
   // Claves que NO se sincronizan (solo sesiÃ³n local)
-  const LOCAL_ONLY_KEYS = ['currentUser', 'rusia_user'];
+  const LOCAL_ONLY_KEYS = ['currentUser', 'rusia_user', 'lr_session', 'laRusiaLogo'];
 
   // Codifica claves para Firebase (no permite . # $ [ ] /)
   function encodeKey(key) {
