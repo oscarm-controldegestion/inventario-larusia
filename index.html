@@ -8,9 +8,8 @@
 <title>La Rusia Inventario</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script src="firebase-sync.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-sync.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,sans-serif;background:#f0f0f0;max-width:430px;margin:0 auto;color:#111}
@@ -202,7 +201,7 @@ function doLogin(){
   if(user){
     setSesion({usuario:user.usuario,nombre:user.nombre,rol:user.rol,area:user.area});
     document.getElementById("login-overlay").style.display="none";
-    document.getElementById("header-user").textContent="👤 "+user.nombre;
+    document.getElementById("header-user").textContent="ð¤ "+user.nombre;
     document.getElementById("logout-btn").style.display="block";
     document.getElementById("login-error").style.display="none";
     if(user.rol!=="admin"){document.getElementById("fresp").value=user.nombre;}
@@ -427,7 +426,7 @@ document.getElementById("logout-btn").addEventListener("click",doLogout);
 var _sesionActiva=getSesion();
 if(_sesionActiva){
   document.getElementById("login-overlay").style.display="none";
-  document.getElementById("header-user").textContent="👤 "+_sesionActiva.nombre;
+  document.getElementById("header-user").textContent="ð¤ "+_sesionActiva.nombre;
   document.getElementById("logout-btn").style.display="block";
   aplicarRestriccionArea();
 }
